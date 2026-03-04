@@ -1,0 +1,532 @@
+\documentclass[12pt,a4paper]{ctexart}  % 中文支持 + 文章格式
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}  % 页边距
+
+\usepackage{amsmath, amssymb, amsthm}  % 数学公式
+\usepackage{algorithm}                 % 算法环境
+\usepackage{algpseudocode}             % 伪代码
+\usepackage{listings}                  % 代码高亮
+\usepackage{xcolor}                    % 颜色
+\usepackage{graphicx}                  % 插图（可选）
+\usepackage{tocloft}                   % 目录美化
+
+% ==================== 代码高亮设置（已彻底修复空格方格）====================
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    showstringspaces=false,
+    upquote=true,
+    keepspaces=true,
+    columns=fullflexible,
+    tabsize=4
+}
+
+% 自定义定理环境
+\newtheorem{theorem}{定理}[section]
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{example}{例}
+
+\title{XCPC算法模板}
+\author{usedchang}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents  % 自动生成目录
+\vspace{10cm}
+\section{杂项}
+\subsection{IO加速}
+\begin{lstlisting}[caption={快速读入模板}]
+#include <bits/stdc++.h>
+using namespace std;
+
+// ====================== 通用快读（支持任意整数类型）======================
+template<typename T>
+inline T read() {
+    T x = 0; int f = 1; char ch = getchar();
+    while (ch < '0' || ch > '9') { if (ch == '-') f = -1; ch = getchar(); }
+    while (ch >= '0' && ch <= '9') { x = x * 10 + (ch - '0'); ch = getchar(); }
+    return x * f;
+}
+
+// ====================== 通用快写（支持任意整数类型）======================
+template<typename T>
+inline void write(T x) {
+    if (x < 0) { putchar('-'); x = -x; }
+    if (x > 9) write(x / 10);
+    putchar(x % 10 + '0');
+}
+
+// ====================== 使用示例 ======================
+int main() {
+    int a = read<int>();
+    long long b = read<long long>();
+    short c = read<short>();
+    __int128 d = read<__int128>();   // 支持 __int128！
+
+    write(a); putchar('\n');
+    write(b); putchar(' ');
+    write(c); putchar('\n');
+    write(d); putchar('\n');         // __int128 直接输出完美
+    return 0;
+}
+\end{lstlisting}
+\vspace{1cm}
+\subsection{对拍}
+\begin{lstlisting}[caption={对拍windows}]
+#include<bits/stdc++.h>
+using namespace std;
+int main(){
+    //一直循环，直到找到不一样的数据
+    while (1) {
+        system("data.exe > data.txt");
+        system("bf.exe < data.txt>bf.txt");
+        system("test.exe < data.txt > test.txt");
+        if (system("fc test.txt bf.txt")) break;                          
+        //不一样就跳出循环
+    }//当 fc 返回 1 时，说明这时数据不一样
+    return 0;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={对拍linux}]
+#include<bits/stdc++.h>
+using namespace std;
+int main(){
+    //一直循环，直到找到不一样的数据
+    while (1) {
+        system("./data > data.txt");
+        system("./bf < data.txt > bf.txt");
+        system("./test < data.txt > test.txt");
+        if (system("diff test.txt bf.txt")) break;                          
+        //不一样就跳出循环
+    }//当 diff 返回非0 时，说明这时数据不一样
+    return 0;
+}
+\end{lstlisting}
+
+\newpage
+
+\section{数据结构}
+\subsection{并查集}
+\begin{lstlisting}[caption={普通并查集}]
+struct DSU{
+    vector<int>f;
+    vector<int>siz;
+    DSU(){};
+    DSU(int n){
+        f.resize(n+1);
+        iota(f.begin(),f.end(),0);
+        siz.assign(n+1,1);
+    }
+    int find(int x){
+        return x==f[x]?x:f[x]=find(f[x]);
+    }
+    bool merge(int x,int y){
+        int fx=find(x),fy=find(y);
+        if(fx==fy) return false;
+        f[fx]=fy;
+        siz[fy]+=siz[fx];
+        return true;
+    }
+    bool same(int x,int y){
+        return find(x)==find(y);
+    }
+};
+\end{lstlisting}
+
+\newpage
+\begin{lstlisting}[caption={带权并查集}]
+//P1196银河英雄传说
+struct DSU{
+    DSU(){}
+    vector<int>f,siz;
+    vector<ll>dis;
+    DSU(int n){
+        dis.resize(n+1);
+        f.resize(n+1);
+        iota(f.begin(),f.end(),0);
+        siz.assign(n+1,1);
+    }
+    int find(int x){
+        int fx=f[x];
+        if(fx==x) return x;
+        int rt=find(f[x]);
+        dis[x]+=dis[f[x]];
+        return f[x]=rt;
+    }
+    bool merge(int x,int y){
+        int fx=find(x),fy=find(y);
+        if(fx==fy) return false; 
+        f[fx]=fy;
+        dis[fx]+=siz[fy];
+        siz[fy]+=siz[fx];
+        return true;
+    }
+    bool same(int x,int y){
+        return find(x)==find(y);
+    }
+    ll Dis(int x,int y){
+        return dis[x]-dis[y];
+    }
+};
+void solve(){
+    int n;cin>>n;
+    DSU dsu(n+1);
+    for(int i=1;i<=n;i++){
+        char c;int x,y;cin>>c>>x>>y;
+        if(c=='M') dsu.merge(x,y);
+        else{
+            if(dsu.same(x,y)) cout<<abs(dsu.Dis(x,y))-1<<endl;
+            else cout<<-1<<endl;
+        }
+    }
+}
+\end{lstlisting}
+\newpage
+\subsection{线段树(普通区间和查询)}
+\begin{lstlisting}
+struct Seg{
+    #define lc (p<<1)
+    #define rc (p<<1|1)
+    struct S{
+        int l,r;
+        ll val,laz;
+    };
+    Seg(){};
+    Seg(int n){
+        tre.resize(n<<2);
+        build(0,n,1);
+    };
+    void pushup(int p){
+        tre[p].val=tre[lc].val+tre[rc].val;
+    }
+    void pushdown(int p){
+        if(tre[p].laz==0) return;
+        tre[lc].laz+=tre[p].laz;
+        tre[rc].laz+=tre[p].laz;
+        tre[lc].val+=tre[p].laz;
+        tre[rc].val+=tre[p].laz;
+        tre[p].laz=0;
+    }
+    void build(int l,int r,int p){
+        tre[p]={l,r,0,0};
+        if(l==r){
+            tre[p]=a[l];
+            return;
+        }
+        int mid=l+r>>1;
+        build(l,mid,lc);
+        build(mid+1,r,rc);
+        pushup(p);
+    }
+    void add(int l,int r,ll k,int p){
+        if(l<=tre[p].l&&r>=tre[p].r){
+            tre[p].val+=k*(tre[p].r-tre[p].l+1);
+            tre[p].laz+=k;
+            return;
+        }
+        int mid=tre[p].l+tre[p].r>>1;
+        pushdown(p);
+        if(l<=mid) add(l,r,k,lc);
+        if(r>mid) add(l,r,k,rc);
+        pushup(p);
+    }
+    ll qry(int l,int r,int p){
+        if(l<=tre[p].l&&r>=tre[p].r){
+            return tre[p].val;
+        }
+        int mid=tre[p].l+tre[p].r>>1;
+        pushdown(p);
+        ll ans=0;
+        if(l<=mid) ans+=qry(l,r,lc);
+        if(r>mid) ans+=qry(l,r,rc);
+        return ans;
+    }
+};
+\end{lstlisting}
+\section{图论}
+\subsection{SPFA}
+
+\begin{lstlisting}[caption={SPFA}]
+struct node{
+    int u;ll w;
+};
+vector<node>G[N];
+ll dis[N];
+bool inq[N];
+int n,m,s;
+void spfa(int s){
+    fill(dis+1,dis+1+n,INT_MAX);
+    queue<int>Q;
+    Q.push(s);
+    dis[s]=0;
+    inq[s]=1;
+    while(!Q.empty()){
+        int u=Q.front();
+        Q.pop();
+        inq[u]=0;
+        for(auto &[v,w]:G[u]){
+            if(dis[v]>dis[u]+w){
+                dis[v]=dis[u]+w;
+                if(!inq[v]){
+                    Q.push(v);
+                    inq[v]=1;
+                }
+            }
+        }
+    }
+}
+void solve(){
+    cin>>n>>m>>s;
+    for(int i=1;i<=m;i++){
+        int x,y;ll w;
+        cin>>x>>y>>w;
+        G[x].push_back({y,w});
+    }
+    spfa(s);
+    for(int i=1;i<=n;i++) cout<<dis[i]<<' ';
+    cout<<endl;
+}
+\end{lstlisting}
+
+\newpage
+\subsection{Dijkstra}
+
+\begin{lstlisting}[caption={Dijkstra(稀疏图堆优化版本)}]
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+const int N=2e5+5;
+struct node{
+    int u;ll w;
+    friend bool operator<(node a,node b){
+        return a.w>b.w;
+    }
+};
+vector<node>G[N];
+bool vis[N];
+ll dis[N];
+int n,m,s;
+void Dijkstra(int s){
+    fill(dis+1,dis+1+n,INT_MAX);
+    priority_queue<node>Q;
+    dis[s]=0;
+    Q.push({s,0});
+    while(!Q.empty()){
+        int u=Q.top().u;
+        Q.pop();
+        if(vis[u]) continue;
+        vis[u]=1;
+        for(auto &[v,w]:G[u]){
+            if(dis[v]>dis[u]+w){
+                dis[v]=dis[u]+w;
+                Q.push({v,dis[v]});
+            }
+        }
+    }
+}
+void solve(){
+    cin>>n>>m>>s;
+    for(int i=1;i<=m;i++){
+        int x,y;ll w;
+        cin>>x>>y>>w;
+        G[x].push_back({y,w});
+    }
+    Dijkstra(s);
+    for(int i=1;i<=n;i++) cout<<dis[i]<<' ';
+    cout<<endl;
+}
+int main(){
+    solve();
+    return 0;
+}
+\end{lstlisting}
+
+\newpage
+
+\begin{lstlisting}[caption={Dijkstra(稠密图邻接矩阵版)}, label={lst:dijkstra-dense}]
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+const int N=1010;     // 注意：n<=1000 推荐使用稠密版，否则改用稀疏图堆优化！
+const ll INF = 1e18;
+
+ll g[N][N];
+ll dis[N];
+bool vis[N];
+int n,m,s;
+
+void Dijkstra(int s){
+    for(int i=1;i<=n;i++){
+        dis[i]=INF;
+        vis[i]=false;
+    }
+    dis[s]=0;
+    for(int i=1;i<=n;i++){
+        int u=-1; ll minv=INF;
+        for(int j=1;j<=n;j++){
+            if(!vis[j] && dis[j]<minv){
+                minv=dis[j];
+                u=j;
+            }
+        }
+        if(u==-1) break;
+        vis[u]=true;
+        for(int j=1;j<=n;j++){
+            if(g[u][j]<INF && dis[j]>dis[u]+g[u][j]){
+                dis[j]=dis[u]+g[u][j];
+            }
+        }
+    }
+}
+
+void solve(){
+    cin>>n>>m>>s;
+    for(int i=1;i<=n;i++)
+        for(int j=1;j<=n;j++)
+            g[i][j]=(i==j?0:INF);
+    for(int i=1;i<=m;i++){
+        int x,y;ll w;
+        cin>>x>>y>>w;
+        g[x][y]=min(g[x][y],w);   // 支持重边取最优
+    }
+    Dijkstra(s);
+    for(int i=1;i<=n;i++) cout<<dis[i]<<' ';
+    cout<<endl;
+}
+int main(){
+    solve();
+    return 0;
+}
+\end{lstlisting}
+
+\newpage
+\section{字符串}
+
+\section{动态规划}
+
+\section{数学}
+
+\subsection{筛法求欧拉函数}
+\begin{lstlisting}[caption={筛法求欧拉函数}]
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+const int N=1e6+5;
+int p[N],vis[N],cnt;
+int phi[N];
+void init(){
+    phi[1]=1;
+    for(int i=2;i<=n;i++){
+        if(!vis[i]){
+            p[cnt++]=i;
+            phi[i]=i-1;
+        }
+        for(int j=0;i*p[j]<=n;j++){
+            int m=i*p[j];
+            vis[m]=1;
+            if(i%p[j]==0){
+                phi[m]=p[j]*phi[i];
+                break;
+            }
+            else phi[m]=(p[j]-1)*phi[i];
+        }
+    }
+}
+\end{lstlisting}
+
+\newpage
+\subsection{筛法求莫比乌斯函数}
+\begin{lstlisting}[caption={筛法求莫比乌斯函数}]
+const int N=1e6+5;
+int p[N],vis[N],cnt;
+int mu[N];
+void init(){
+    mu[1]=1;
+    for(int i=2;i<=n;i++){
+        if(!vis[i]){
+            p[cnt++]=i;
+            mu[i]=-1;
+        }
+        for(int j=0;i*p[j]<=n;j++){
+            int m=i*p[j];
+            vis[m]=1;
+            if(i%p[j]==0){
+                mu[m]=0;
+                break;
+            }
+            else{
+                mu[m]=-mu[i];
+            } 
+        }
+    }
+}
+\end{lstlisting}
+
+\newpage
+\subsection{矩阵快速幂}
+\begin{lstlisting}[caption={矩阵快速幂模板}]
+struct Mat{
+    vector<vector<ll>>a;
+    int n;
+    Mat(int n):n(n){
+        a=vector<vector<ll>>(n+1,vector<ll>(n+1));
+    };
+    Mat(){};
+    friend Mat operator+(Mat &A,Mat &B){
+        Mat C(A.n);
+        for(int i=0;i<=A.n;i++){
+            for(int j=0;j<=A.n;j++){
+                C.a[i][j]=(A.a[i][j]+B.a[i][j])%mod;
+            }
+        }
+        return C;
+    }
+    friend Mat operator+=(Mat &A,Mat &B){
+        A=A+B;
+        return A;
+    }
+    friend Mat operator*(Mat &A,Mat &B){
+        Mat C(A.n);
+        for(int k=0;k<=A.n;k++){
+            for(int i=0;i<=A.n;i++){
+                if(A.a[i][k]==0) continue;
+                for(int j=0;j<=A.n;j++){
+                    C.a[i][j]=(C.a[i][j]+A.a[i][k]*B.a[k][j]%mod)%mod;
+                }
+            }
+        }
+        return C;
+    }
+    friend Mat operator*=(Mat &A,Mat &B){
+        A=A*B;
+        return A;
+    }
+    void q_pow(Mat &A,ll B){
+        Mat S(A.n);//单位矩阵
+        for(int i=0;i<=A.n;i++) S.a[i][i]=1;
+        while(B>0){
+            if(B&1){
+                S*=A;
+            }
+            A*=A;
+            B>>=1;
+        }
+        A=move(S);
+    }
+}M;
+\end{lstlisting}
+\end{document}
