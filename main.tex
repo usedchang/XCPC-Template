@@ -45,7 +45,7 @@
 \vspace{10cm}
 \section{杂项}
 \subsection{IO加速}
-\begin{lstlisting}[caption={快速读入模板}]
+\begin{lstlisting}[caption={快速读入模板},label={fast-io}]
 #include <bits/stdc++.h>
 using namespace std;
 
@@ -82,7 +82,7 @@ int main() {
 \end{lstlisting}
 \vspace{1cm}
 \subsection{对拍}
-\begin{lstlisting}[caption={对拍windows}]
+\begin{lstlisting}[caption={对拍windows},label={对拍}]
 #include<bits/stdc++.h>
 using namespace std;
 int main(){
@@ -118,7 +118,7 @@ int main(){
 
 \section{数据结构}
 \subsection{并查集}
-\begin{lstlisting}[caption={普通并查集}]
+\begin{lstlisting}[caption={普通并查集},label={lst:dsu-basic}]
 struct DSU{
     vector<int>f;
     vector<int>siz;
@@ -145,7 +145,7 @@ struct DSU{
 \end{lstlisting}
 
 \newpage
-\begin{lstlisting}[caption={带权并查集}]
+\begin{lstlisting}[caption={weighted-dsu},label={lst:dsu-weighted}]
 //P1196银河英雄传说
 struct DSU{
     DSU(){}
@@ -194,7 +194,7 @@ void solve(){
 \end{lstlisting}
 \newpage
 \subsection{线段树(普通区间和查询)}
-\begin{lstlisting}
+\begin{lstlisting}[caption={common-Seg},label={lst:Seg-basic}]
 struct Seg{
     #define lc (p<<1)
     #define rc (p<<1|1)
@@ -254,10 +254,525 @@ struct Seg{
     }
 };
 \end{lstlisting}
+
+\subsection{笛卡尔树}
+\begin{lstlisting}[caption={cartesian-tree},label={lst:cartesian-tree}]
+//P7972 Self Permutation
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+const ll mod=1e9+7;
+void solve(){
+    int n;cin>>n;
+    vector<int>L(n+1),R(n+1),st,a(n+1);
+    vector<ll>dp(n+1);
+    for(int i=1;i<=n;i++){
+        cin>>a[i];
+        int lc=0;
+        while(!st.empty()&&a[st.back()]>=a[i]){
+            lc=st.back();
+            st.pop_back();
+        }
+        L[i]=lc;
+        if(!st.empty()) R[st.back()]=i;
+        st.emplace_back(i); 
+    }
+    auto dfs=[&](auto &&dfs,int u,int l,int r) ->void {
+        if(L[u]) dfs(dfs,L[u],l,u-1);
+        if(R[u]) dfs(dfs,R[u],u+1,r);
+        (dp[u]+=(dp[L[u]]+1)*(dp[R[u]]+1)%mod)%=mod;
+        if(l>1) (dp[u]+=dp[R[u]])%=mod;
+        if(r<n) (dp[u]+=dp[L[u]])%=mod;   
+    };
+    dfs(dfs,st.front(),1,n);
+    cout<<dp[st.front()]<<endl;
+}
+\end{lstlisting}
+
+\subsection{字典树}
+\begin{lstlisting}[caption={Trie},label={lst:Trie}]
+struct Trie{
+    vector<int>cnt;
+    vector< vector<int> >son;
+    int idx=0;
+    Trie(int n){
+        cnt.resize(n+1);
+        son.resize(n+1);
+        for(int i=0;i<=n;i++) son[i]=vector<int>(65);
+    }
+    void insert(string &s){
+        int num;
+        int p=0;
+        for(char &c:s){
+            if(isdigit(c)) num=c-'0'+52;
+            else if(islower(c)) num=c-'a'+26;
+            else if(isupper(c)) num=c-'A';
+            if(!son[p][num]) son[p][num]=(++idx);
+            p=son[p][num];
+            ++cnt[p];
+        }
+    }
+    int query(string &s){
+        int num;
+        int p=0;
+        for(char &c:s){
+            if(isdigit(c)) num=c-'0'+52;
+            else if(islower(c)) num=c-'a'+26;
+            else if(isupper(c)) num=c-'A';
+            if(!son[p][num]) return 0;
+            p=son[p][num];
+        }
+        return cnt[p];
+    }
+}trie;
+\end{lstlisting}
+
+
+\begin{lstlisting}[caption={01-Trie},label={lst:01-Trie}]
+//P4551 最长异或路径
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+struct ZTrie{
+    vector<array<int,2>>son;
+    vector<int>cnt;
+    int idx=0;
+    ZTrie(int n){
+        son.resize(n+1);
+        cnt.resize(n+1);
+    }
+    void insert(int x){
+        int p=0;
+        for(int i=31;i>=0;i--) {
+            int bit=(x>>i&1);
+            if(!son[p][bit]) son[p][bit]=(++idx);
+            p=son[p][bit];
+        }
+    }
+    int query(int x){
+        int ans=0,p=0;
+        for(int i=31;i>=0;i--){
+            int bit=(x>>i&1);
+            if(son[p][bit^1]) p=son[p][bit^1],ans|=(1<<i);
+            else if(son[p][bit]) p=son[p][bit];
+            else return ans;
+        }
+        return ans;
+    }
+}trie(2e6);
+const int N=2e5+5;
+struct node{
+    int u,w;
+};
+vector<node>G[N];
+int ans=0;
+void dfs(int u,int fa,int sum){
+    trie.insert(sum);
+    ans=max(ans,trie.query(sum));
+    for(auto &[v,w]:G[u]){
+        if(v==fa) continue;
+        dfs(v,u,sum^w);
+    }
+}
+void solve(){
+    int n;cin>>n;
+    for(int i=1;i<n;i++){
+        int x,y,w;cin>>x>>y>>w;
+        G[x].push_back({y,w});
+        G[y].push_back({x,w});
+    }
+    dfs(1,0,0);
+    cout<<ans<<endl;
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    solve();
+    return 0;
+}
+\end{lstlisting}
+\subsection{莫队}
+\begin{lstlisting}[caption={普通莫队算法},label={lst:mo-algo}]
+//P2709 小B的询问
+const int N=5e4+10;
+int a[N],pos[N],cnt[N];
+ll res,ans[N];
+struct Q{
+    int l,r,k;
+}q[N];
+void Add(int n){
+    cnt[a[n]]++;
+    res+=cnt[a[n]]*cnt[a[n]]-(cnt[a[n]]-1)*(cnt[a[n]]-1);
+}
+void Sub(int n){
+    cnt[a[n]]--;
+    res-=(cnt[a[n]]+1)*(cnt[a[n]]+1)-(cnt[a[n]])*(cnt[a[n]]);
+}
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0),cout.tie(0);
+    int n,m,k;cin>>n>>m>>k;
+    int siz=sqrt(n+0.5);
+    for(int i=1;i<=n;i++){
+        cin>>a[i];
+        pos[i]=i/siz;
+    }
+    for(int i=0;i<m;i++){
+        cin>>q[i].l>>q[i].r;
+        q[i].k=i;
+    }
+    sort(q,q+m,[](Q x,Q y){
+        return pos[x.l]==pos[y.l]?x.r<y.r:pos[x.l]<pos[y.l];
+    });
+    int l=1,r=0;
+    for(int i=0;i<m;i++){
+        while(q[i].l<l) Add(--l);
+        while(q[i].r>r) Add(++r);
+        while(q[i].l>l) Sub(l++);
+        while(q[i].r<r) Sub(r--);
+        ans[q[i].k]=res;
+    }
+    for(int i=0;i<m;i++){
+        cout<<ans[i]<<endl;
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\section{树}
+\subsection{LCA}
+
+
+\begin{lstlisting}[caption={dfn 大跳LCA},label={lst:dfn log求LCA}]
+//P3379 最近公共祖先
+const int N=5e5+5;
+vector<int>G[N];
+int f[N],d[N],dfn[N],top[N],cnt,siz[N],son[N];
+void dfs1(int u,int fa){
+    d[u]=d[fa]+1;
+    f[u]=fa;
+    siz[u]=1;
+    for(int v:G[u]){
+        if(fa==v) continue;
+        dfs1(v,u);
+        siz[u]+=siz[v];
+        if(siz[v]>siz[son[u]]) son[u]=v;
+    }
+}
+void dfs2(int u,int node){
+    dfn[u]=(++cnt);//维护dfn序
+    top[u]=node;
+    if(son[u]) dfs2(son[u],node);
+    for(int v:G[u]){
+        if(v==f[u]||v==son[u]) continue;
+        dfs2(v,v);
+    }
+}
+int LCA(int l,int r){
+    while(top[l]!=top[r]){
+        if(d[top[l]]<d[top[r]]) swap(l,r);
+        l=f[top[l]];
+    }
+    if(d[l]<d[r]) return l;
+    return r;
+}//树上LCA跳
+void solve(){
+    int n,m,s;
+    cin>>n>>m>>s;
+    for(int i=1;i<n;i++){
+        int x,y;cin>>x>>y;
+        G[x].push_back(y);
+        G[y].push_back(x);
+    }
+    dfs1(s,0);
+    dfs2(s,s);
+    for(int i=1;i<=m;i++){
+        int x,y;cin>>x>>y;
+        cout<<LCA(x,y)<<endl;
+    }
+}
+\end{lstlisting}
+
+
+\begin{lstlisting}[caption={dfn 实现O1 LCA},label={lst:dfn O1求LCA}]
+//P3379 最近公共祖先
+void solve(){
+    int n,q,s;
+    cin>>n>>q>>s;
+    vector<vector<int>>G(n+1);
+    for(int i=1;i<n;i++){
+        int x,y;
+        cin>>x>>y;
+        G[x].push_back(y);
+        G[y].push_back(x);
+    }
+    vector<int>d(n+1);
+    vector<int>f(n+1);
+    vector<int>dfn(n+1);
+    int cnt=0;
+    auto dfs=[&](auto &&dfs,int u,int fa) ->void {
+        f[u]=fa;
+        dfn[u]=(++cnt);
+        d[u]=d[fa]+1;
+        for(int v:G[u]){
+            if(v==fa) continue;
+            dfs(dfs,v,u);
+        }
+    };
+    dfs(dfs,s,0);
+    vector<vector<int>>st(n+1,vector<int>(21));
+    for(int i=1;i<=n;i++) st[dfn[i]][0]=f[i];
+    for(int j=1;j<=20;j++){
+        for(int i=1;i+(1<<j)-1<=n;i++){
+            int l=st[i][j-1];
+            int r=st[i+(1<<j-1)][j-1];
+            if(d[l]<d[r]) st[i][j]=l;
+            else st[i][j]=r;
+        }
+    }
+    auto lca=[&](int l,int r) ->int {
+        if(l==r) return l;
+        l=dfn[l],r=dfn[r];
+        if(l>r) swap(l,r);
+        l++;
+        int len=__lg(r-l+1);
+        int L=st[l][len];
+        int R=st[r-(1<<len)+1][len];
+        return (d[L]<d[R])?L:R;
+    };
+    while(q--){
+        int x,y;
+        cin>>x>>y;
+        cout<<lca(x,y)<<endl;
+    }
+}
+\end{lstlisting}
+
+\subsection{树链剖分}
+\begin{lstlisting}[caption={树链剖分},label={lst:树链剖分}]
+//P1505 国家集训队
+const int N=2e5+5;
+int f[N],d[N],siz[N],dfn[N],son[N],top[N],cnt;
+ll a[N],b[N];
+const ll INF=1e18;
+struct Edge{
+    int x,y;ll w;
+};
+vector<int>G[N];
+void dfs1(int u,int fa){
+    d[u]=d[fa]+1;
+    f[u]=fa;
+    siz[u]=1;
+    for(int v:G[u]){
+        if(v==fa) continue;
+        dfs1(v,u);
+        siz[u]+=siz[v];
+        if(siz[v]>siz[son[u]]) son[u]=v;
+    }
+}
+void dfs2(int u,int node){
+    top[u]=node;
+    dfn[u]=(++cnt);
+    b[cnt]=a[u];
+    if(son[u]){
+        dfs2(son[u],node);
+    }
+    for(int v:G[u]){
+        if(v==f[u]||v==son[u]) continue;
+        dfs2(v,v);
+    }
+}
+struct Info{
+    ll sum,mx,mn;
+    Info(ll sum,ll mx,ll mn):sum(sum),mx(mx),mn(mn){};
+    Info():sum(0LL),mx(-INF),mn(INF){};
+    friend Info operator+(const Info A,const Info B){
+        return Info(A.sum+B.sum,max(A.mx,B.mx),min(A.mn,B.mn));
+    }
+    friend Info operator+=(Info &A,const Info B){
+        A=A+B;
+        return A;
+    }
+};
+struct Seg{
+    struct S{
+        int l,r;
+        ll sum,mx,mn,laz;bool laz1;
+    };
+    #define lc (p<<1)
+    #define rc (p<<1|1)
+    vector<S>tre;
+    Seg(){};
+    Seg(int n){
+        tre.resize(n<<2);
+        build(1,n,1);
+    }
+    void pushdown(int p){
+        if(tre[p].laz!=INF) {
+            tre[lc].laz=tre[rc].laz=tre[p].laz;
+            tre[lc].laz1=tre[rc].laz1=false;
+            tre[lc].mx=tre[rc].mx=tre[p].laz;
+            tre[lc].mn=tre[rc].mn=tre[p].laz;
+            tre[lc].sum=tre[p].laz*(tre[lc].r-tre[lc].l+1);
+            tre[rc].sum=tre[p].laz*(tre[rc].r-tre[rc].l+1);
+            tre[p].laz=INF;
+        }
+        if(tre[p].laz1){
+            tre[lc].laz1^=tre[p].laz1;
+            tre[rc].laz1^=tre[p].laz1;
+
+            tre[lc].sum=-tre[lc].sum;
+            ll lasmn=tre[lc].mn,lasmx=tre[lc].mx;
+            tre[lc].mx=-lasmn;
+            tre[lc].mn=-lasmx;
+
+            tre[rc].sum=-tre[rc].sum;
+            lasmn=tre[rc].mn,lasmx=tre[rc].mx;
+            tre[rc].mx=-lasmn;
+            tre[rc].mn=-lasmx;
+            tre[p].laz1=0;
+        }
+    }
+    void pushup(int p){
+        tre[p].mx=max(tre[lc].mx,tre[rc].mx);
+        tre[p].mn=min(tre[lc].mn,tre[rc].mn);
+        tre[p].sum=tre[lc].sum+tre[rc].sum;
+    }
+    void build(int l,int r,int p){
+        tre[p]={l,r,0,-INF,INF,INF,0};
+        if(l==r){
+            tre[p].sum=b[l];
+            tre[p].mx=tre[p].mn=b[l];
+            return;
+        }
+        int mid=l+r>>1;
+        build(l,mid,lc);
+        build(mid+1,r,rc); 
+        pushup(p);
+    }
+    void Change(int l,int r,ll k,int p){
+        if(l<=tre[p].l&&r>=tre[p].r){
+            tre[p].laz1=false;
+            tre[p].laz=tre[p].mx=tre[p].mn=k;
+            tre[p].sum=k*(tre[p].r-tre[p].l+1);
+            return;
+        }
+        int mid=tre[p].l+tre[p].r>>1;
+        pushdown(p);
+        if(l<=mid) Change(l,r,k,lc);
+        if(r>mid) Change(l,r,k,rc);
+        pushup(p);
+    }//区间赋值
+    void Flip(int l,int r,int p){
+        if(l<=tre[p].l&&r>=tre[p].r){
+            tre[p].laz1^=1;
+            tre[p].sum*=-1;
+            ll lasmn=tre[p].mn,lasmx=tre[p].mx;
+            tre[p].mx=-lasmn;
+            tre[p].mn=-lasmx;
+            return;
+        }
+        int mid=tre[p].l+tre[p].r>>1;
+        pushdown(p);
+        if(l<=mid) Flip(l,r,lc);
+        if(r>mid) Flip(l,r,rc);
+        pushup(p);
+    }//区间乘-1
+    Info qry(int l,int r,int p){
+        if(l<=tre[p].l&&tre[p].r<=r){
+            return Info(tre[p].sum,tre[p].mx,tre[p].mn);
+        }
+        int mid=tre[p].l+tre[p].r>>1;
+        Info ans;
+        pushdown(p);
+        if(l<=mid) ans+=qry(l,r,lc);
+        if(r>mid) ans+=qry(l,r,rc);
+        return ans;
+    }
+}S;
+void Flip(int x,int y){
+    while(top[x]!=top[y]){
+        if(d[top[x]]<d[top[y]]) swap(x,y);
+        S.Flip(dfn[top[x]],dfn[x],1);
+        x=f[top[x]];
+    }
+    if(dfn[x]>dfn[y]) swap(x,y);
+    S.Flip(dfn[x]+1,dfn[y],1);
+}
+Info Qry(int x,int y){
+    Info T;
+    while(top[x]!=top[y]){
+        if(d[top[x]]<d[top[y]]) swap(x,y);
+        T+=S.qry(dfn[top[x]],dfn[x],1);
+        x=f[top[x]];
+    }
+    if(dfn[x]>dfn[y]) swap(x,y);
+    T+=S.qry(dfn[x]+1,dfn[y],1);
+    return T;
+}
+void solve(){
+    int n;cin>>n;
+    vector<Edge>edge;
+    for(int i=1;i<n;i++){
+        int x,y;ll w;cin>>x>>y>>w;
+        ++x,++y;
+        G[x].push_back(y);
+        G[y].push_back(x);
+        edge.push_back({x,y,w});
+    }
+    dfs1(1,0);    
+    vector<int>mp(n+1);//输入的第i条边权下放到哪个点？
+    for(int i=0;i<edge.size();i++){
+        auto &[x,y,w]=edge[i];
+        if(d[x]>d[y]) {
+            a[x]=w;
+            mp[i+1]=x;
+        }
+        else {
+            a[y]=w;
+            mp[i+1]=y;
+        }
+    } 
+    dfs2(1,1);
+    S=Seg(n);
+    int q;cin>>q;
+    while(q--){
+        string op;cin>>op;
+        int x,y;cin>>x>>y;
+        if(op=="SUM") {
+            ++x,++y;
+            cout<<Qry(x,y).sum<<endl;
+            //询问 x,y 节点之间边权和
+        }
+        else if(op=="MAX") {
+            ++x,++y;
+            cout<<Qry(x,y).mx<<endl;
+            //询问 x,y 节点之间边权最大值
+        }
+        else if(op=="MIN"){
+            ++x,++y;
+            cout<<Qry(x,y).mn<<endl;
+            //询问 x,y 节点之间边权最小值
+        }
+        else if(op=="C"){
+            x=mp[x];
+            S.Change(dfn[x],dfn[x],y,1);
+            //将输入的第 x 条边权值改为 y
+        }
+        else if(op=="N"){
+            ++x,++y;
+            Flip(x,y);
+            //将 u,v 节点之间的边权都变为相反数
+        }
+    }
+}
+\end{lstlisting}
+
 \section{图论}
 \subsection{SPFA}
 
-\begin{lstlisting}[caption={SPFA}]
+\begin{lstlisting}[caption={SPFA},label={lst:SPFA}]
 struct node{
     int u;ll w;
 };
@@ -299,10 +814,10 @@ void solve(){
 }
 \end{lstlisting}
 
-\newpage
+
 \subsection{Dijkstra}
 
-\begin{lstlisting}[caption={Dijkstra(稀疏图堆优化版本)}]
+\begin{lstlisting}[caption={Dijkstra(稀疏图堆优化版本)},label={lst:Dijkstra}]
 #include<bits/stdc++.h>
 using namespace std;
 #define endl '\n'
@@ -353,14 +868,12 @@ int main(){
 }
 \end{lstlisting}
 
-\newpage
-
 \begin{lstlisting}[caption={Dijkstra(稠密图邻接矩阵版)}, label={lst:dijkstra-dense}]
 #include<bits/stdc++.h>
 using namespace std;
 #define endl '\n'
 typedef long long ll;
-const int N=1010;     // 注意：n<=1000 推荐使用稠密版，否则改用稀疏图堆优化！
+const int N=1010;     // 注意:n<=1000 推荐使用稠密版，否则改用稀疏图堆优化！
 const ll INF = 1e18;
 
 ll g[N][N];
@@ -412,19 +925,139 @@ int main(){
 }
 \end{lstlisting}
 
+\subsection{差分约束}
+
+给定 \(n\) 个变量 \(x_1, x_2, \dots, x_n\) 与 \(m\) 个差分约束 \(x_c - x_{c'} \leq y\)。
+
+求任意一组满足所有约束的可行解。无解输出 \texttt{NO}。
+
+\begin{lstlisting}[caption={spfa差分约束},label={lst:spfa差分约束}]
+const int N=2e5+5;
+struct node{
+    int u;ll w;
+};
+vector<node>G[N];
+int cnt[N];
+bool inq[N];
+ll dis[N];
+int n,m;
+bool spfa(){
+    fill(dis+1,dis+1+n,INT_MAX);
+    queue<int>Q;
+    Q.push(0);
+    inq[0]=0;
+    cnt[0]=1;
+    while(!Q.empty()){
+        int u=Q.front();
+        Q.pop();
+        inq[u]=false;
+        for(auto &[v,w]:G[u]){
+            if(dis[v]>dis[u]+w){
+                dis[v]=dis[u]+w;
+                if(!inq[v]){
+                    cnt[v]++;
+                    if(cnt[v]>n) return false;
+                    Q.push(v);
+                    inq[v]=1;
+                }
+            }
+        }
+    }
+    return true;
+}
+void solve(){
+    cin>>n>>m;
+    for(int i=1;i<=m;i++){
+        int x,y;ll w;cin>>x>>y>>w;
+        G[y].push_back({x,w});
+    }
+    for(int i=1;i<=n;i++){
+        G[0].push_back({i,0});
+    }
+    if(spfa()){
+         for(int i=1;i<=n;i++) cout<<dis[i]<<' ';
+        cout<<endl;
+    }
+    else cout<<"NO"<<endl;
+}
+\end{lstlisting}
+
 \newpage
 \section{字符串}
+\subsection{字符串哈希}
+\begin{lstlisting}[caption={字符串哈希},label={lst:字符串哈希}]
+using ull = unsigned long long;
+ull base = 131;
+ull mod1 = 212370440130137957, mod2 = 1e9 + 7;
+ull get_hash1(const string &s) {
+  int len = s.size();
+  ull ans = 0;
+  for (int i = 0; i < len; i++) ans = (ans * base + (ull)s[i]) % mod1;
+  return ans;
+}
+ull get_hash2(const string &s) {
+  int len = s.size();
+  ull ans = 0;
+  for (int i = 0; i < len; i++) ans = (ans * base + (ull)s[i]) % mod2;
+  return ans;
+}
+bool cmp(const string &s, const string &t) {
+  bool f1 = get_hash1(s) != get_hash1(t);
+  bool f2 = get_hash2(s) != get_hash2(t);
+  return f1 || f2;
+}
+\end{lstlisting}
 
+\subsection{KMP}
+\subsection{字典树}
+\subsection{马拉车}
+
+\newpage
 \section{动态规划}
+\subsection{树形dp}
+\subsection{换根dp}
+\subsection{状压dp}
+\subsection{SOS dp}
+\subsection{数位dp}
 
+\newpage
 \section{数学}
 
+\subsection{筛法求因数个数}
+\begin{lstlisting}[caption={因数筛},label={lst:因数筛}]
+const int N = 1000010;
+int p[N];     // p[i]: i 的最小质因子（spf）
+int pr[N];    // pr[]: 质数表
+int cnt;
+int d[N];     // d[i]: i 的正因数个数
+int a[N];     // a[i]: i 的最小质因子的指数
+void init(int n) {
+    d[1] = 1; a[1] = 0; p[1] = 1;
+    for(int i = 2; i <= n; i++) {
+        if(!p[i]) {                    // i 是质数
+            p[i] = pr[++cnt] = i;
+            d[i] = 2;
+            a[i] = 1;
+        }
+        for(int j = 1; j <= cnt && 1LL * i * pr[j] <= n; j++) {
+            int m = i * pr[j];
+            p[m] = pr[j];              // 记录 m 的最小质因子
+            if(p[i] == pr[j]) {        // 还是同一个质因子
+                d[m] = d[i] / (a[i] + 1) * (a[i] + 2);
+                a[m] = a[i] + 1;
+                break;
+            } 
+            else {                     // 新增一个不同质因子
+                d[m] = d[i] * 2;       // 等价于 d[i] * d[pr[j]]
+                a[m] = 1;
+            }
+        }
+    }
+}
+\end{lstlisting}
+
 \subsection{筛法求欧拉函数}
-\begin{lstlisting}[caption={筛法求欧拉函数}]
-#include<bits/stdc++.h>
-using namespace std;
-#define endl '\n'
-typedef long long ll;
+\begin{lstlisting}[caption={欧拉筛},label={lst:欧拉筛}]
 const int N=1e6+5;
 int p[N],vis[N],cnt;
 int phi[N];
@@ -450,7 +1083,7 @@ void init(){
 
 \newpage
 \subsection{筛法求莫比乌斯函数}
-\begin{lstlisting}[caption={筛法求莫比乌斯函数}]
+\begin{lstlisting}[caption={莫比乌斯函筛},label={lst:莫比乌斯筛}]
 const int N=1e6+5;
 int p[N],vis[N],cnt;
 int mu[N];
@@ -476,9 +1109,10 @@ void init(){
 }
 \end{lstlisting}
 
+
 \newpage
 \subsection{矩阵快速幂}
-\begin{lstlisting}[caption={矩阵快速幂模板}]
+\begin{lstlisting}[caption={矩阵快速幂 basic},label={lst:matrix-qpow-base}]
 struct Mat{
     vector<vector<ll>>a;
     int n;
@@ -529,4 +1163,90 @@ struct Mat{
     }
 }M;
 \end{lstlisting}
+
+\begin{lstlisting}[caption={矩阵快速幂 max-plus},label={lst:matrix-qpow-max-plus}]
+const ll INF=1e18;
+struct Mat{
+    vector<vector<ll>>a;
+    int n;
+    Mat(int n):n(n){
+        a=vector<vector<ll>>(n+1,vector<ll>(n+1,-INF));
+    };
+    Mat(){};
+    friend Mat operator*(const Mat &A,const Mat &B){
+        Mat C(A.n);
+        for(int k=0;k<=A.n;k++){
+            for(int i=0;i<=A.n;i++){
+                for(int j=0;j<=A.n;j++){
+                    C.a[i][j]=max(C.a[i][j],A.a[i][k]+B.a[k][j]);
+                }
+            }
+        }
+        return C;
+    }
+    friend Mat operator*=(Mat &A,Mat &B){
+        A=A*B;
+        return A;
+    }
+    void q_pow(Mat &A,ll B){
+        Mat S(A.n);//单位矩阵
+        for(int i=0;i<=A.n;i++) S.a[i][i]=0;
+        while(B>0){
+            if(B&1) S*=A;
+            A*=A;
+            B>>=1;
+        }
+        A=move(S);
+    }
+}M;
+\end{lstlisting}
+\subsection{第二类斯特林数}
+
+第二类斯特林数（斯特林子集数）\(\begin{Bmatrix}n\\ k\end{Bmatrix}\)，也可记做 \(S(n,k)\)，表示将 \(n\) 个两两不同的元素划分为 \(k\) 个互不区分的非空子集的方案数。
+
+\begin{lstlisting}[caption={Stirling 数},label={lst:Stirling 数},basicstyle=\ttfamily]
+typedef unsigned long long ll;
+const int N=10010;
+ll dp[N][N/10],p;
+void init(){
+    dp[1][1]=1;
+    for(int i=2;i<=10000;i++){
+        for(int j=1;j<=1000;j++){
+            dp[i][j]=((j%p)*dp[i-1][j]%p+dp[i-1][j-1])%p;
+        }
+    }
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    int n,m;
+    cin>>n>>m>>p;
+    init();
+    cout<<dp[n][m]<<endl;
+    return 0;
+}
+\end{lstlisting}
+
+\newpage
+\subsection{卡特兰数}
+Catalan 数有如下常见的表达式：
+
+\[
+C_n = \frac{1}{n+1}\binom{2n}{n} = \frac{(2n)!}{n!(n+1)!},\quad n\ge 0. \tag{2}
+\]
+
+\[
+C_n = \binom{2n}{n} - \binom{2n}{n+1},\quad n \ge 0. \tag{3}
+\]
+
+\[
+C_n = \frac{4n-2}{n+1}C_{n-1},\quad n>0,\ C_0=1. \tag{4}
+\]
+数列的前几项为：1,1,2,5,14,42,132,429,1430,…
+\subsection{排列组合类-含Lucas}
+\subsection{高斯消元}
+\subsection{线性基}
+\subsection{数论分块}
+\subsection{莫比乌斯反演}
+\subsection{exgcd}
+\subsection{位运算基础}
 \end{document}
