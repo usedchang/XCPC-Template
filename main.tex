@@ -117,6 +117,51 @@ int main(){
 \newpage
 
 \section{数据结构}
+
+\subsection{ST表}
+\begin{lstlisting}[caption={ST表},label={lst:ST表}]
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+const ll INF=4e18;
+struct ST{
+    ST(){};
+    vector<vector<ll>>mx,mn;
+    ST(const vector<ll>&a){
+        int n=a.size()-1;
+        mx=vector<vector<ll>>(n+1,vector<ll>(21,-INF));
+        mn=vector<vector<ll>>(n+1,vector<ll>(21,INF));
+        for(int i=1;i<=n;i++) mx[i][0]=mn[i][0]=a[i];
+        for(int i=1;i<=21;i++){
+            for(int j=1;j+(1<<i)-1<=n;j++){
+                mx[j][i]=(mx[j][i-1]>mx[j+(1<<i-1)][i-1])?mx[j][i-1]:mx[j+(1<<i-1)][i-1];
+                mn[j][i]=(mn[j][i-1]<mn[j+(1<<i-1)][i-1])?mn[j][i-1]:mn[j+(1<<i-1)][i-1];
+            }
+        }
+    };
+    ll qry_mx(int l,int r){
+        int len=__lg(r-l+1);//31-__builtin_clz(r-l+1)
+        return (mx[l][len]>mx[r-(1<<len)+1][len])?mx[l][len]:mx[r-(1<<len)+1][len];
+    }  
+    ll qry_mn(int l,int r){
+        int len=__lg(r-l+1);//31-__builtin_clz(r-l+1)
+        return (mn[l][len]<mn[r-(1<<len)+1][len])?mn[l][len]:mn[r-(1<<len)+1][len];
+    }  
+};
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    int n,q,l,r;cin>>n>>q;
+    vector<ll>a(n+1);
+    for(int i=1;i<=n;i++) cin>>a[i];
+    ST st(a);
+    while(q--){
+        cin>>l>>r;
+        cout<<st.qry_mx(l,r)<<endl;
+    }
+    return 0;
+}
+\end{lstlisting}
 \subsection{并查集}
 \begin{lstlisting}[caption={普通并查集},label={lst:dsu-basic}]
 struct DSU{
@@ -494,7 +539,6 @@ void solve(){
 }
 \end{lstlisting}
 
-
 \begin{lstlisting}[caption={dfn 实现O1 LCA},label={lst:dfn O1求LCA}]
 //P3379 最近公共祖先
 void solve(){
@@ -548,7 +592,82 @@ void solve(){
     }
 }
 \end{lstlisting}
+\subsection{树的直径}
+\begin{lstlisting}[caption={两遍dfs查直径},label={lst:树的直径}]
+const int N=2e5+10;
+vector<int>G[N];
+bool vis[N];
+ll d[N],s=1;
+void dfs(int u,int f){
+    for(auto &v:G[u]){
+        if(v==f) continue;
+        d[v]=d[u]+1;
+        dfs(v,u);
+    }
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    int n;cin>>n;
+    for(int i=1,x,y;i<n;i++){
+        cin>>x>>y;
+        G[x].push_back(y);
+        G[y].push_back(x);
+    }
+    d[s]=0;dfs(s,0);
+    for(int i=1;i<=n;i++) if(d[i]>d[s]) s=i;
+    d[s]=0;dfs(s,0);
+    ll ans=0;
+    for(int i=1;i<=n;i++) ans=max(ans,d[i]);
+    cout<<ans<<endl;
+    return 0;
+}
+\end{lstlisting}
 
+\begin{lstlisting}[caption={树形dp求直径},label={lst:树形dp求直径}]
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    int n;cin>>n;
+    vector<vector<int>>G(n+1);
+    vector<int>down(n+1),up(n+1);
+    for(int i=1;i<n;i++){
+        int x,y;cin>>x>>y;
+        G[x].emplace_back(y);
+        G[y].emplace_back(x);
+    }
+    auto dfs1=[&](auto &&dfs1,int u,int fa) ->void {
+        for(int v:G[u]){
+            if(v==fa) continue;
+            dfs1(dfs1,v,u);
+            down[u]=max(down[u],down[v]+1);
+        }
+    };
+    dfs1(dfs1,1,0);
+    auto dfs2=[&](auto &&dfs2,int u,int fa) ->void {
+        int m1=0,m2=0;//最长路径，次长路径
+        for(int v:G[u]){
+            if(v==fa) continue;
+            if(down[m1]<down[v]) m2=m1,m1=v;
+            else if(down[m2]<down[v]) m2=v;
+        }
+        for(int v:G[u]){
+            if(v==fa) continue;
+            up[v]=up[u]+1;
+            if(m1!=0&&down[m1]!=down[v]) up[v]=max(up[v],down[m1]+2);
+            else if(down[m2]!=0) up[v]=max(up[v],down[m2]+2);
+            dfs2(dfs2,v,u);
+        }
+    };
+    dfs2(dfs2,1,0);
+    int ans=0;
+    for(int i=1;i<=n;i++) ans=max(ans,down[i]+up[i]);
+    cout<<ans<<endl;
+    return 0;
+}
+\end{lstlisting}
 \subsection{树链剖分}
 \begin{lstlisting}[caption={树链剖分},label={lst:树链剖分}]
 //P1505 国家集训队
@@ -924,7 +1043,147 @@ int main(){
     return 0;
 }
 \end{lstlisting}
+\subsection{最小生成树}
+\begin{lstlisting}[caption={Kruskal求最小生成树},label={Kruskal}]
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+ll ans;int n,m,cntn;
+const int N=2e5+10;
+int f[N];
+int find(int x){
+    if(x==f[x]) return x;
+    return f[x]=find(f[x]);
+}
+struct node{
+    int x,y,w;
+    friend bool operator <(node a,node b){
+        return a.w<b.w;
+    }
+}a[N];
+void kruskal(){
+    cntn=n;
+    for(int i=1;i<=m;i++){
+        int fx=find(a[i].x);
+        int fy=find(a[i].y);
+        if(fx!=fy){
+            f[fx]=fy;
+            cntn--;
+            ans+=a[i].w;
+            if(cntn==1) break;
+        }
+    }
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    cin>>n>>m;
+    for(int i=1;i<=n;i++) f[i]=i;
+    for(int i=1;i<=m;i++){
+        int x,y,w;
+        cin>>a[i].x>>a[i].y>>a[i].w;
+    }
+    sort(a+1,a+1+m);
+    kruskal();
+    if(cntn==1) cout<<ans<<endl;
+    else cout<<"none"<<endl;
+    return 0;
+}
+\end{lstlisting}
 
+\subsection{Kruskal重构树}
+Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
+\begin{lstlisting}[caption={Kruskal重构树},label={lst:Kruskal重构树}]
+struct DSU{
+    vector<ll>f;
+    DSU(){}
+    DSU(int n){
+        f.resize(n+1);
+        iota(f.begin(),f.end(),0);
+    };
+    int find(int x){
+        return x==f[x]?x:f[x]=find(f[x]);
+    }
+    bool merge(int x,int y){
+        int fx=find(x),fy=find(y);
+        if(fx==fy) return false;
+        f[fx]=fy;
+        return true;
+    }
+};
+struct Edge{
+    int x,y;ll w;
+    Edge(){};
+    Edge(int x,int y,ll w):x(x),y(y),w(w){};
+    friend bool operator<(Edge A,Edge B){
+        return A.w<B.w;
+    }
+};
+inline void solve(){
+    int n,m;
+    cin>>n>>m;
+    DSU dsu(n<<1);
+    vector<vector<int>>G(n<<1|1);
+    vector<Edge>a;
+    vector<ll>val(n<<1|1);//存新节点(边)权值
+    for(int i=1;i<=m;i++){
+        int x,y;ll w;
+        cin>>x>>y>>w;
+        a.emplace_back(x,y,w);
+    }
+    sort(a.begin(),a.end());
+    int tot=n;
+    for(auto &[x,y,w]:a){
+        int fx=dsu.find(x),fy=dsu.find(y);
+        if(fx!=fy){
+            ++tot;
+            dsu.merge(fx,tot);
+            dsu.merge(fy,tot);
+            G[tot].push_back(fx);
+            G[tot].push_back(fy);
+            val[tot]=w;
+        }
+    }
+    vector<int>dfn(n<<1|1);
+    vector<ll>d(n<<1|1);
+    vector<vector<int>>st(n<<1|1,vector<int>(20));
+    int top=0;
+    auto dfs=[&](auto &&dfs,int u,int fa) ->void {
+        d[u]=d[fa]+1;
+        dfn[u]=++top;
+        st[dfn[u]][0]=fa;
+        for(int v:G[u]) dfs(dfs,v,u);
+    };
+    for(int i=1;i<=(n<<1);i++){
+        if(dsu.find(i)==i){
+            dfs(dfs,i,0);
+        }
+    }
+    for(int i=1;i<20;i++){
+        for(int j=1;j+(1<<i)-1<=(n<<1);j++){
+            int L=st[j][i-1];
+            int R=st[j+(1<<i-1)][i-1];
+            st[j][i]=(d[L]<d[R])?L:R;
+        }
+    }
+    auto lca=[&](int l,int r) ->int {
+        if(l==r) return l;
+        l=dfn[l],r=dfn[r];
+        if(l>r) swap(l,r);
+        ++l;
+        int len=__lg(r-l+1);
+        int L=st[l][len];
+        int R=st[r-(1<<len)+1][len];
+        return (d[L]<d[R])?L:R;
+    };
+    int q;cin>>q;
+    for(int i=1;i<=q;i++){
+        int x,y;cin>>x>>y;
+        if(dsu.find(x)!=dsu.find(y)) cout<<"impossible"<<endl;
+        else cout<<val[lca(x,y)]<<endl;
+    }
+}
+\end{lstlisting}
 \subsection{差分约束}
 
 给定 \(n\) 个变量 \(x_1, x_2, \dots, x_n\) 与 \(m\) 个差分约束 \(x_c - x_{c'} \leq y\)。
@@ -981,7 +1240,7 @@ void solve(){
     else cout<<"NO"<<endl;
 }
 \end{lstlisting}
-
+\subsection{缩点}
 \newpage
 \section{字符串}
 \subsection{字符串哈希}
@@ -1009,11 +1268,14 @@ bool cmp(const string &s, const string &t) {
 \end{lstlisting}
 
 \subsection{KMP}
-\subsection{字典树}
+\subsection{后缀树}
 \subsection{马拉车}
 
 \newpage
 \section{动态规划}
+\subsection{01背包}
+\subsection{完全背包}
+\subsection{多重背包}
 \subsection{树形dp}
 \subsection{换根dp}
 \subsection{状压dp}
