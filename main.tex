@@ -1087,7 +1087,127 @@ void solve(){
     }
 }
 \end{lstlisting}
+\subsection{树上启发式合并}
+\section*{题面简述}
 
+给一棵以 $1$ 为根的树，共 $n$ 个结点，每个结点有一个颜色 $c[i]$。每次询问给出一个结点 $u$，求以 $u$ 为根的子树中有多少种不同的颜色。
+
+\subsection*{第一步：求 DFS 序与子树区间}
+
+对树进行一次 DFS，记录每个结点的进入时间 $\mathrm{in}[u]$ 和离开时间 $\mathrm{out}[u]$。则以 $u$ 为根的子树恰好对应 DFS 序中的连续区间 $[\mathrm{in}[u],\;\mathrm{out}[u]]$。
+
+同时在 DFS 过程中记录每个结点的\textbf{重儿子}（子树大小最大的儿子），记为 $\mathrm{heavy}[u]$。
+
+\subsection*{第二步：启发式合并（DSU on Tree）}
+
+对每个结点 $u$，按如下顺序处理：
+
+\begin{enumerate}
+    \item 递归处理所有\textbf{轻儿子}，处理完后\textbf{清除}其对全局计数数组的贡献。
+    \item 递归处理\textbf{重儿子}，处理完后\textbf{保留}其对全局计数数组的贡献。
+    \item 暴力遍历所有轻儿子的子树中的结点，将它们的颜色加入全局计数数组 $\mathrm{cnt}[\cdot]$：
+    \[
+        \mathrm{cnt}[c[v]] \leftarrow \mathrm{cnt}[c[v]] + 1
+    \]
+    若某颜色 $c[v]$ 的计数从 $0$ 变为 $1$，则当前不同颜色种类数加一：
+    \[
+        \mathrm{tot} \leftarrow \mathrm{tot} + [\mathrm{cnt}[c[v]] = 1]
+    \]
+    \item 将结点 $u$ 自身的颜色也加入计数数组，同理更新 $\mathrm{tot}$。
+    \item 此时 $\mathrm{tot}$ 即为以 $u$ 为根的子树的颜色种类数，记录答案：
+    \[
+        \mathrm{ans}[u] = \mathrm{tot}
+    \]
+    \item 若 $u$ 本身是其父结点的轻儿子，则暴力清除整棵子树的贡献（将 $\mathrm{cnt}[\cdot]$ 和 $\mathrm{tot}$ 恢复）。
+\end{enumerate}
+
+\subsection*{第三步：回答询问}
+
+所有询问离线处理。对于每个询问的结点 $u$，直接输出 $\mathrm{ans}[u]$ 即可。
+
+\section*{正确性说明}
+
+启发式合并的核心思想在于：每次只保留重儿子的信息，轻儿子的信息暴力重算。由于每个结点到根的路径上至多有 $O(\log n)$ 条轻边（每经过一条轻边，子树大小至少翻倍），所以每个结点被暴力遍历的总次数为 $O(\log n)$。
+
+\section*{复杂度分析}
+
+\begin{itemize}
+    \item \textbf{时间复杂度：}每个结点被暴力加入/清除计数数组的次数为其到根路径上的轻边数，至多 $O(\log n)$ 次。因此总时间复杂度为：
+    \[
+        O(n \log n + m)
+    \]
+    其中 $m$ 为询问数。
+
+\end{itemize}
+\begin{lstlisting}[caption={树上启发式合并}]
+//U41492 树上数颜色
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+const int N=1e5+5;
+vector<int>G[N];
+int cnt[N],siz[N],son[N],f[N],res,a[N],ans[N];
+void dfs1(int u,int fa){
+    f[u]=fa;
+    siz[u]=1;
+    for(int v:G[u]){
+        if(v==fa) continue;
+        dfs1(v,u);
+        siz[u]+=siz[v];
+        if(siz[v]>siz[son[u]]) son[u]=v;
+    }
+}
+void Upd(int u,bool F,int skiped){
+    if(F){
+        cnt[a[u]]++;
+        if(cnt[a[u]]==1) res++;
+    }
+    else{
+        cnt[a[u]]--;
+        if(cnt[a[u]]==0) res--;
+    }
+    for(int v:G[u]){
+        if(v==f[u]||v==skiped) continue;
+        Upd(v,F,0);
+    }
+}//更新轻儿子贡献
+void dfs2(int u,bool F){
+    for(int v:G[u]){
+        if(v==son[u]||v==f[u]) continue;
+        dfs2(v,0);
+    }
+    if(son[u]) {
+        dfs2(son[u],1);
+    }
+    Upd(u,1,son[u]);
+    ans[u]=res;
+    if(!F) Upd(u,0,0);
+}
+void solve(){
+    int n;cin>>n;
+    for(int i=1;i<n;i++){
+        int x,y;cin>>x>>y;
+        G[x].push_back(y);
+        G[y].push_back(x);
+    }
+    for(int i=1;i<=n;i++) cin>>a[i];
+    dfs1(1,0);
+    dfs2(1,1);
+    int q;cin>>q;
+    while(q--){
+        int x;cin>>x;
+        cout<<ans[x]<<endl;
+    }
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    solve();
+    return 0;
+}
+\end{lstlisting}
+
+\newpage
 \section{图论}
 \subsection{SPFA}
 
