@@ -35,12 +35,24 @@
 \newtheorem{lemma}[theorem]{引理}
 \newtheorem{example}{例}
 
-\title{XCPC算法模板}
-\author{usedchang}
-\date{\today}
 
 \begin{document}
-\maketitle
+\begin{titlepage}
+    \centering                  % 居中对齐
+    \vspace*{4cm}               % 顶部留白（调整这个数值改变垂直位置）
+    
+    {\Huge \textbf{XCPC算法模板}} \par  % 大标题，加粗
+    \vspace{2cm}                % 标题与作者之间的间距
+    
+    {\Large usedchang} \par     % 作者名
+    \vspace{1.5cm}
+    
+    {\Large \today} \par        % 日期
+    
+    \vfill                      % 底部填充，将内容“顶”到页面中上部
+\end{titlepage}
+
+
 \tableofcontents  % 自动生成目录
 \vspace{10cm}
 \section{杂项}
@@ -237,7 +249,7 @@ void solve(){
     }
 }
 \end{lstlisting}
-\newpage
+
 \subsection{线段树(普通区间和查询)}
 \begin{lstlisting}[caption={common-Seg},label={lst:Seg-basic}]
 struct Seg{
@@ -339,12 +351,11 @@ void solve(){
 \begin{lstlisting}[caption={Trie},label={lst:Trie}]
 struct Trie{
     vector<int>cnt;
-    vector< vector<int> >son;
+    vector< array<int,65> >son;
     int idx=0;
     Trie(int n){
         cnt.resize(n+1);
         son.resize(n+1);
-        for(int i=0;i<=n;i++) son[i]=vector<int>(65);
     }
     void insert(string &s){
         int num;
@@ -372,7 +383,6 @@ struct Trie{
     }
 }trie;
 \end{lstlisting}
-
 
 \begin{lstlisting}[caption={01-Trie},label={lst:01-Trie}]
 //P4551 最长异或路径
@@ -434,6 +444,196 @@ void solve(){
 int main(){
     cin.tie(0)->ios::sync_with_stdio(false);
     solve();
+    return 0;
+}
+\end{lstlisting}
+\subsection{根号分治}
+
+
+\begin{itemize}
+    \item 第一行：两个整数 $n, q$（$1 \le n, q \le 10^5$），分别表示序列长度和询问次数。
+    \item 第二行：$n$ 个整数 $A_1, A_2, \dots, A_n$（$1 \le A_i \le 10^9$），表示给定的整数序列。
+    \item 接下来 $q$ 行：每行两个整数 $x, y$（$1 \le x, y \le 10^9$），表示一次询问。
+\end{itemize}
+
+\section*{输出格式}
+输出 $q$ 行，每行一个整数，表示对应询问的答案。
+
+\section*{简要分析}
+给定序列 $A[1..n]$ 和询问 $(x,y)$，需统计满足 $i<j$ 且 $A[i]=x, A[j]=y$ 的数对数量。记 $pos[v]$ 为值 $v$ 在序列中出现的位置集合（升序排列），则答案可表示为：
+$$
+\sum_{p \in pos[x]} \left( |pos[y]| - \text{upper\_bound}(pos[y], p) \right)
+$$
+或等价表示为：
+$$
+\sum_{p \in pos[y]} \text{lower\_bound}(pos[x], p)
+$$
+
+\section*{核心划分}
+设阈值 $B = \sqrt{n}$（取整），将所有值分为两类：
+\begin{enumerate}
+    \item \textbf{高频值（Heavy）}：满足 $|pos[v]| > B$ 的值，记高频值集合为 $H$；
+    \item \textbf{低频值（Light）}：满足 $|pos[v]| \le B$ 的值。
+\end{enumerate}
+
+\section*{预处理阶段（离线预处理高频值对）}
+对于任意两个高频值 $u, v \in H$，预计算数对 $(u,v)$ 的答案并存储在哈希表 $mp$ 中：
+$$
+mp[(u,v)] = \sum_{p \in pos[u]} \left( |pos[v]| - \text{upper\_bound}(pos[v], p) \right)
+$$
+预处理时间复杂度：$O(|H|^2 \cdot B)$，由于 $|H| \le \frac{n}{B}$，故总复杂度为 $O(nB)$。
+
+\section*{查询阶段（分情况处理）}
+对每个询问 $(x,y)$，分三类处理（结合记忆化避免重复计算）：
+\begin{enumerate}
+    \item 若 $(x,y)$ 已计算过（记忆化哈希表 $\text{memo}$ 存在），直接返回结果；
+    \item 若 $x,y$ 均为高频值，直接调用预处理结果 $mp[(x,y)]$；
+    \item 若至少一个为低频值，选择更小的集合遍历计算：
+          \begin{itemize}
+              \item 若 $|pos[x]| \le |pos[y]|$：遍历 $pos[x]$，对每个位置 $p$ 统计 $pos[y]$ 中大于 $p$ 的元素数量；
+              \item 否则：遍历 $pos[y]$，对每个位置 $p$ 统计 $pos[x]$ 中小于 $p$ 的元素数量。
+          \end{itemize}
+          单次查询时间复杂度：$O(B)$。
+\end{enumerate}
+
+\section*{复杂度分析}
+预处理复杂度：$O(n\sqrt{n})$；
+单次查询复杂度：$O(\sqrt{n})$，总查询复杂度：$O(q\sqrt{n})$；
+整体时间复杂度：$O((n+q)\sqrt{n})$，可通过 $10^5$ 规模的数据。
+\begin{lstlisting}[caption={根号分治},label={lst:根号分治}]
+
+void solve(){
+    int n,q;cin>>n>>q;
+    vector<int>a(n+1);
+    unordered_map< int,vector<int> >pos;//存储重数
+    for(int i=1;i<=n;i++){
+        cin>>a[i];
+        pos[a[i]].push_back(i);
+    }
+    int siz=sqrt(n+0.5);
+    vector<int>H;
+    for(auto const&[x,y]:pos){
+        if(y.size()>siz) H.emplace_back(x);
+    }
+    map<pair<int,int>,ll>mp;
+    for(int i=0;i<H.size();i++){
+        for(int j=0;j<H.size();j++){
+            for(int &p:pos[H[i]]){
+                mp[{H[i],H[j]}]+=pos[H[j]].end()-upper_bound(pos[H[j]].begin(),pos[H[j]].end(),p);
+            }
+        }
+    }
+    map<pair<int,int>,ll>memo;
+    for(int i=1;i<=q;i++){
+        int x,y;cin>>x>>y;
+        if(memo.count({x,y})){
+            cout<<memo[{x,y}]<<endl;
+            continue;
+        }
+        if(pos[x].size()>siz&&pos[y].size()>siz) {
+            cout<<(memo[{x,y}]=mp[{x,y}])<<endl;
+        }
+        else{
+            ll ans=0;
+            if(pos[x].size()<=pos[y].size()||pos[x].size()<=siz&&pos[y].size()<=siz){
+                for(int &p:pos[x]){
+                    ans+=pos[y].end()-upper_bound(pos[y].begin(),pos[y].end(),p);
+                }
+            }
+            else{
+                for(int &p:pos[y]){
+                    ans+=lower_bound(pos[x].begin(),pos[x].end(),p)-pos[x].begin();
+                }
+            }
+            cout<<(memo[{x,y}]=ans)<<endl;
+        }
+    }
+}
+\end{lstlisting}
+
+
+\subsubsection{无向图三元环计数}
+\section*{题面简述}
+
+给定一个 $n$ 个点 $m$ 条边的简单无向图（无重边、无自环，不保证连通），求图中三元环的个数。
+
+三元环指恰好包含三个点 $u, v, w$ 及三条边 $\langle u,v\rangle, \langle v,w\rangle, \langle w,u\rangle$ 的子图。两个三元环不同当且仅当存在一个点属于其中一个而不属于另一个。
+
+数据范围：$1 \le n \le 10^5$，$1 \le m \le 2 \times 10^5$。
+
+\section*{做法}
+
+采用经典的\textbf{无向边定向 + 枚举}算法。
+
+\begin{enumerate}
+    \item \textbf{定向}：对每条无向边 $(u, v)$，令其从度数小的点指向度数大的点；若度数相同，则从编号小的点指向编号大的点。这样将无向图转化为一个 DAG，记有向边集为 $E'$。
+    \item \textbf{枚举}：对每个点 $u$，先用标记数组标记 $u$ 的所有出邻居。然后对每条出边 $u \to v$，枚举 $v$ 的所有出邻居 $w$，若 $w$ 被 $u$ 标记过（即 $u \to w \in E'$），则 $(u, v, w)$ 构成一个三元环，答案加一。
+\end{enumerate}
+
+由于定向后每个三元环的三条边恰好形成一条有向路径 $u \to v \to w$（其中 $u \to w$ 也存在），因此每个三元环恰好被统计一次，无需去重。
+
+\section*{复杂度分析}
+
+\textbf{引理}：定向后每个点的出度 $d^+(u) \le \sqrt{2m}$。
+
+\begin{proof}
+对任意点 $u$，其每个出邻居 $v$ 都满足 $\deg(v) \ge \deg(u) \ge d^+(u)$。因此 $u$ 的 $d^+(u)$ 个出邻居的度数之和满足：
+\[
+    \sum_{v \in N^+(u)} \deg(v) \ge (d^+(u))^2
+\]
+又因为所有边的度数贡献总和不超过 $2m$，故 $(d^+(u))^2 \le 2m$，即 $d^+(u) \le \sqrt{2m}$。
+\end{proof}
+
+算法的核心操作量为：
+\[
+    T = \sum_{(u \to v) \in E'} d^+(v) \le \sum_{(u \to v) \in E'} \sqrt{2m} = |E'| \cdot \sqrt{2m} = m\sqrt{2m}
+\]
+
+因此总时间复杂度为 $O(m\sqrt{m})$。
+
+对于本题 $m = 2 \times 10^5$，操作量约为 $2 \times 10^5 \times 632 \approx 1.26 \times 10^8$，可以通过。空间复杂度为 $O(n + m)$。
+\begin{lstlisting}[caption={根号分治求三元环计数}]
+#include <bits/stdc++.h>
+using namespace std;
+int main(){
+    cin.tie(nullptr)->ios::sync_with_stdio(false);
+    int n, m;
+    cin >> n >> m;
+    vector<pair<int,int>> edges(m);
+    vector<int>deg(n + 1, 0);
+    for(int i = 0; i < m; i++){
+        cin >> edges[i].first >> edges[i].second;
+        deg[edges[i].first]++;
+        deg[edges[i].second]++;
+    }
+    // 定向：度数小 -> 度数大，度数相同则编号小 -> 编号大
+    vector<vector<int>> adj(n + 1);
+    for(int i = 0; i < m; i++){
+        int u = edges[i].first, v = edges[i].second;
+        if(deg[u] < deg[v] || (deg[u] == deg[v] && u < v)){
+            adj[u].push_back(v);
+        } else {
+            adj[v].push_back(u);
+        }
+    }
+    // 枚举三元环
+    vector<int> mark(n + 1, 0); // mark[w] = u 表示 u->w 这条边存在
+    long long ans = 0;
+    for(int u = 1; u <= n; u++){
+        // 标记 u 的所有出边邻居
+        for(int v : adj[u]){
+            mark[v] = u;
+        }
+        // 枚举 u -> v -> w，检查 u -> w
+        for(int v : adj[u]){
+            for(int w : adj[v]){
+                if(mark[w] == u){
+                    ans++;
+                }
+            }
+        }
+    }
+    cout << ans << "\n";
     return 0;
 }
 \end{lstlisting}
@@ -1184,6 +1384,190 @@ inline void solve(){
     }
 }
 \end{lstlisting}
+
+\subsection{欧拉回路}
+\begin{lstlisting}[caption={有向图欧拉回路},label={有向图欧拉回路}]
+void solve(){
+    int n,m;
+    cin>>n>>m;
+    vector<vector<int>>G(n+1);
+    vector<int>nxt(n+1);
+    vector<int>in(n+1),out(n+1);
+    for(int i=1;i<=m;i++){
+        int x,y;
+        cin>>x>>y;
+        G[x].emplace_back(y);
+        ++in[y],++out[x];
+    }
+    auto find=[&]() ->int {
+        int cnt1=0,cnt2=0;
+        for(int i=1;i<=n;i++){
+            if(in[i]-out[i]<-1||in[i]-out[i]>1) return -1;
+            cnt1+=(in[i]-out[i]==-1);
+            cnt2+=(in[i]-out[i]==1);
+        }
+        if(cnt1+cnt2==0){
+            for(int i=1;i<=n;i++){
+                if(out[i]>0) return i;
+            }
+        }//存在欧拉回路,需要保证图联通
+        else if(cnt1==1&&cnt2==1){
+            for(int i=1;i<=n;i++){
+                if(out[i]-in[i]==1) return i;
+            }
+        }//存在欧拉路径
+        return -1;
+    };//找到起点
+    int s=find();
+    if(s==-1){
+        cout<<"No"<<endl;
+        return;
+    }
+    vector<int>res;
+    vector<char>vis(m+1);
+    for(int i=1;i<=n;i++) sort(G[i].begin(),G[i].end());
+    auto dfs=[&](auto &&dfs,int u) ->void {
+        while(nxt[u]<G[u].size()){
+            int v=G[u][nxt[u]];
+            nxt[u]++;//当前弧优化
+            dfs(dfs,v);
+        }
+        res.push_back(u);
+    };
+    dfs(dfs,s);
+    if(res.size()!=m+1){
+        cout<<"No"<<endl;
+        return;
+    }
+    reverse(res.begin(),res.end());
+    for(int x:res) cout<<x<<' ';
+    cout<<endl;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={无向图欧拉回路},label={无向图欧拉回路}]
+void solve(){
+    int m,n=500;cin>>m;
+    vector<vector<pair<int,int>>>G(n+1);
+    vector<int>in(n+1);
+    for(int i=1;i<=m;i++){
+        int x,y;cin>>x>>y;
+        G[x].emplace_back(y,i);
+        G[y].emplace_back(x,i);
+        ++in[x],++in[y];
+    }
+    auto find=[&]() ->int {
+        int cnt=0;
+        for(int i=1;i<=n;i++){
+            if(in[i]&1) ++cnt;
+        }
+        if(cnt!=2&&cnt!=0) return -1;
+        else if(cnt==0) {
+            for(int i=1;i<=n;i++){
+                if(in[i]) return i;
+            }
+        }
+        else if(cnt==2){
+            for(int i=1;i<=n;i++){
+                if(in[i]&1) return i;
+            }
+        }
+        return -1;
+    };
+    int s=find();
+    vector<int>nxt(n+1),vis(m+1),res;
+    for(int i=1;i<=n;i++) sort(G[i].begin(),G[i].end());
+    auto dfs=[&](auto &&dfs,int u) ->void {
+        while(nxt[u]<G[u].size()){
+            int v=G[u][nxt[u]].first;
+            int id=G[u][nxt[u]].second;
+            ++nxt[u];
+            if(vis[id]) continue;
+            vis[id]=1;
+            dfs(dfs,v);
+        }
+        res.push_back(u);
+    };
+    dfs(dfs,s);
+    reverse(res.begin(),res.end());
+    for(int x:res) cout<<x<<endl;
+}
+\end{lstlisting}
+
+\subsection{二分图}
+
+\subsubsection{二分图染色}
+\begin{lstlisting}[caption={二分图染色},label={二分图染色}]
+void solve(){
+    int n,m;
+    cin>>n>>m;
+    vector<vector<int>>G(n+1);
+    for(int i=1;i<=m;i++){
+        int x,y;cin>>x>>y;
+        G[x].emplace_back(y);
+        G[y].emplace_back(x);
+    }
+    int A=0,B=0;
+    vector<int>col(n+1);
+    auto dfs=[&](auto &dfs,int u) ->bool {
+        bool f=true;
+        for(int v:G[u]){
+            if(!col[v]) {
+                col[v]=3-col[u];
+                if(col[v]==1) ++A;
+                else ++B;
+                f&=dfs(dfs,v);
+            }
+            else if(col[v]!=3-col[u]) f=false;//当前联通分量无法染色
+        }
+        return f;
+    };
+    ll ans=0;
+    for(int i=1;i<=n;i++){
+        if(!col[i]){
+            A=B=0;
+            col[i]=1;
+            ++A;
+            if(dfs(dfs,i)) ans+=max(A,B);
+        }
+    }
+    cout<<ans<<endl;
+}
+\end{lstlisting}
+\subsubsection{二分图最大权匹配}
+\begin{lstlisting}[caption={二分图最大匹配},label={二分图最大匹配}]
+const int N=505;
+vector<int>G[N];
+int match[N];
+bool vis[N];
+bool dfs(int u){
+    for(auto &v:G[u]){
+        if(vis[v]) continue;
+        vis[v]=1;
+        if(!match[v]||dfs(match[v])){
+            match[v]=u;
+            return 1;
+        }
+    }
+    return 0;
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    int n,m,e;cin>>n>>m>>e;
+    for(int i=1;i<=e;i++){
+        int u,v;
+        cin>>u>>v;
+        G[u].push_back(v);
+    }
+    ll ans=0;
+    for(int i=1;i<=n;i++) {
+        fill(vis+1,vis+1+n,false);
+        ans+=dfs(i);
+    }
+    cout<<ans<<endl;
+    return 0;
+}
+\end{lstlisting}
 \subsection{差分约束}
 
 给定 \(n\) 个变量 \(x_1, x_2, \dots, x_n\) 与 \(m\) 个差分约束 \(x_c - x_{c'} \leq y\)。
@@ -1241,6 +1625,164 @@ void solve(){
 }
 \end{lstlisting}
 \subsection{缩点}
+\subsubsection{SCC(强连通分量)}
+\begin{lstlisting}[caption={SCC},label={SCC}]
+const int N=1e4+5;
+vector<int>G[N];
+int w[N],new_w[N];
+vector<int>new_G[N];
+struct SCC{
+    vector<vector<int> >ans;
+    vector<int>dfn,low,mp;
+    vector<char>vis;
+    stack<int>st;
+    int cnt,n;
+    SCC(int n):n(n),cnt(0){
+        vis.resize(n+1);
+        dfn.resize(n+1);
+        low.resize(n+1);
+        mp.resize(n+1);
+    }
+    void tarjan(int u){
+        low[u]=dfn[u]=(++cnt);
+        st.push(u);
+        vis[u]=1;
+        for(int v:G[u]){
+            if(!dfn[v]){
+                tarjan(v);
+                low[u]=min(low[u],low[v]);
+            }
+            else if(vis[v]){
+                low[u]=min(low[u],dfn[v]);
+            }
+        }
+        if(dfn[u]==low[u]){
+            int y;
+            vector<int>tmp;
+            do{
+                y=st.top();
+                st.pop();
+                vis[y]=0;
+                tmp.push_back(y);
+                mp[y]=ans.size();
+            }while(u!=y);
+            if(!tmp.empty()) ans.push_back(tmp);
+        }
+    }
+};
+void solve(){
+    int n,m;
+    cin>>n>>m;
+    for(int i=1;i<=n;i++) cin>>w[i];
+    for(int i=1;i<=m;i++){
+        int x,y;cin>>x>>y;
+        G[x].push_back(y);
+    }
+    SCC scc(n+1);
+    for(int i=1;i<=n;i++){
+        if(!scc.dfn[i]) scc.tarjan(i);
+    }
+    for(int i=0;i<scc.ans.size();i++){
+        for(int v:scc.ans[i]){
+            new_w[i]+=w[v];
+        }
+    }
+    vector<int>in(scc.ans.size()),dp(scc.ans.size());
+    for(int i=1;i<=n;i++){
+        for(int v:G[i]){
+            if(scc.mp[v]!=scc.mp[i]) {
+                new_G[scc.mp[i]].push_back(scc.mp[v]);
+                ++in[scc.mp[v]];
+            }
+        }
+    }
+    queue<int>Q;
+    for(int i=0;i<scc.ans.size();i++){
+        if(!in[i]) {
+            Q.push(i);
+            dp[i]=new_w[i];
+        }
+    }
+    while(!Q.empty()){
+        int u=Q.front();
+        Q.pop();
+        for(int v:new_G[u]){
+            if((--in[v])==0){
+                dp[v]=max(dp[v],dp[u]+new_w[v]);
+                Q.push(v);
+            }
+        }
+    }
+    cout<<*max_element(dp.begin(),dp.end())<<endl;
+}
+\end{lstlisting}
+\subsubsection{DECC(边双联通分量)}
+\begin{lstlisting}[caption={DECC},label={DECC}]
+const int N=2e5+5;
+vector<pair<int,int>>G[N];
+struct DECC{
+    vector< vector<pair<int,int> >>G;
+    vector< vector<int> >B;// 存储所有边双连通分量
+    vector<int>dfn,low;//时间戳
+    stack<int>st;
+    vector<char>vis;
+    vector<int>mp;// 每个点属于哪个分量
+    int cnt,n,id;
+    DECC(int n):n(n),cnt(0),id(0){
+        G.resize(n+1);
+        low.resize(n+1);
+        dfn.resize(n+1);
+        mp.resize(n+1);
+    }
+    void add(int x,int y){
+        ++id;
+        G[x].push_back({y,id});
+        G[y].push_back({x,id});
+    }
+    void tarjan(int u,int fa){
+        dfn[u]=low[u]=(++cnt);
+        st.push(u);
+        for(auto &[v,id]:G[u]){
+            if(!dfn[v]){
+                tarjan(v,id);
+                low[u]=min(low[u],low[v]);
+            }
+            else if(id!=fa&&dfn[v]<dfn[u]){
+                low[u]=min(low[u],dfn[v]);
+            }
+        }
+        if(dfn[u]==low[u]){
+            vector<int>tmp;
+            int y;
+            do{
+                y=st.top();
+                mp[y]=B.size();
+                st.pop();
+                tmp.push_back(y);
+            }while(y!=u);
+            if(!tmp.empty()) B.push_back(tmp);
+        }
+    }
+};
+void solve(){
+    int n,m;
+    cin>>n>>m;
+    DECC bcc(n+1);
+    for(int i=1;i<=m;i++){
+        int x,y;cin>>x>>y;
+        bcc.add(x,y);
+    }
+    for(int i=1;i<=n;i++){
+        if(!bcc.dfn[i]) bcc.tarjan(i,0);
+    }
+    cout<<bcc.B.size()<<endl;
+    for(auto &p:bcc.B){
+        cout<<p.size()<<' ';
+        for(int &x:p) cout<<x<<' ';
+        cout<<endl;
+    }
+}
+\end{lstlisting}
 \newpage
 \section{字符串}
 \subsection{字符串哈希}
@@ -1268,20 +1810,393 @@ bool cmp(const string &s, const string &t) {
 \end{lstlisting}
 
 \subsection{KMP}
-\subsection{后缀树}
-\subsection{马拉车}
-
+\begin{lstlisting}[caption={KMP},label={KMP}]
+vector<int>Kmp(string s){
+    vector<int>pi(s.size()+1);
+    for(int i=1;i<s.size();i++){
+        int j=pi[i-1];
+        while(j&&s[j]!=s[i]) j=pi[j-1];
+        if(s[i]==s[j]) j++;
+        pi[i]=j;
+    }
+    return pi;
+}
+void solve(){
+    string s,t;
+    cin>>t>>s;
+    string res=s+"#"+t;
+    vector<int>pi=Kmp(res);
+    vector<int>ans=Kmp(s);
+    for(int i=s.size();i<pi.size();i++){
+        if(pi[i]==s.size()) cout<<i-s.size()*2+1<<endl;
+    }
+    for(int i=0;i<s.size();i++) cout<<ans[i]<<' ';
+    cout<<endl;
+}
+\end{lstlisting}
+\subsection{Manacher(马拉车)}
+\begin{lstlisting}[caption={马拉车求最长回文子串},label={最长回文子串}]
+int Manacher(const string& st) {
+    string s = "^$";
+    for (char c : st) {
+        s += c;
+        s += '$';
+    }
+    s += '&';
+    int len = s.size(), mid = 1, mx = 1, ans = -1;
+    vector<int> p(len);
+    for (int i = 1; i < len; ++i) {
+        if (i < mx)
+            p[i] = min(mx - i, p[2 * mid - i]);
+        else
+            p[i] = 1;
+        while (s[i - p[i]] == s[i + p[i]])
+            ++p[i];
+        if (mx < i + p[i]) {
+            mid = i;
+            mx = i + p[i];
+        }
+        ans = max(ans, p[i] - 1);
+    }
+    return ans;
+}
+int main() {
+    string st;
+    cin >> st;
+    cout << Manacher(st) << endl;
+}
+\end{lstlisting}
 \newpage
 \section{动态规划}
-\subsection{01背包}
-\subsection{完全背包}
-\subsection{多重背包}
-\subsection{树形dp}
-\subsection{换根dp}
-\subsection{状压dp}
-\subsection{SOS dp}
-\subsection{数位dp}
 
+\subsection{01背包}
+\begin{lstlisting}[caption={01背包},label={最朴素01背包}]
+void solve(){
+    int w,n;cin>>w>>n;
+    vector<int>a(n+1),b(n+1);
+    vector<int>f(w+1);
+    for(int i=1;i<=n;i++) cin>>a[i]>>b[i];
+    for(int i=1;i<=n;i++) {
+        for(int j=w;j>=a[i];j--){
+            f[j]=max(f[j-a[i]]+b[i],f[j]);
+        }
+    }
+    cout<<f[w]<<endl;
+}
+\end{lstlisting}
+\begin{lstlisting}[caption={bitset优化可行01背包},label={bitset优化可行背包}]
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+void solve(){
+    int w, n; cin >> w >> n;
+    bitset<10001> dp;
+    dp[0] = 1;
+    for(int i = 1; i <= n; i++) {
+        int a; cin >> a;
+        dp |= dp << a;
+    }
+    for(int j = w; j >= 0; j--) {
+        if(dp[j]) {
+            cout << j << endl;
+            return;
+        }
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={双向搜索优化纯搜索},label={双向搜索优化大值域枚举}]
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+vector<pair<ll, int>> gen(vector<ll> a) {
+    vector<pair<ll, int>> res;
+    int k = a.size();
+    for (int mask=0; mask<(1<<k); mask++) {
+        ll s=0;
+        for (int i=0; i<k; i++) if (mask&(1<<i)) s += a[i];
+        res.emplace_back(s, mask);
+    }
+    sort(res.begin(), res.end());
+    return res;
+}
+
+int main() {
+    int n; ll c;
+    scanf("%d%lld", &n, &c);
+    vector<ll> w(n);
+    for (int i=0; i<n; i++) scanf("%lld", &w[i]);
+    int mid = n/2;
+    vector<ll> L(w.begin(), w.begin()+mid), R(w.begin()+mid, w.end());
+    auto ls = gen(L), rs = gen(R);
+    ll maxw=0; int lm=0, rm=0;
+    for (auto [sb, m]: rs) {
+        if (sb > c) continue;
+        ll rem = c - sb;
+        int pos = upper_bound(ls.begin(), ls.end(), make_pair(rem, (1<<mid)-1)) - ls.begin() - 1;
+        if (pos >=0 && ls[pos].first + sb > maxw) {
+            maxw = ls[pos].first + sb;
+            lm = ls[pos].second;
+            rm = m;
+        }
+    }
+    vector<int> ans(n);
+    for (int i=0; i<mid; i++) ans[i] = (lm >> i) & 1;
+    for (int i=0; i<n-mid; i++) ans[mid+i] = (rm >> i) & 1;
+    printf("%lld\n", maxw);//最优代价
+    for (int i=0; i<n; i++) printf("%d ", ans[i]);//最优方案输出
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{完全背包}
+\begin{lstlisting}[caption={朴素完全背包}]
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    int n,w;cin>>w>>n;
+    vector<ll>a(n+1),b(n+1),f(w+1);
+    for(int i=1;i<=n;i++) cin>>a[i]>>b[i];
+    for(int i=1;i<=n;i++){
+        for(int j=a[i];j<=w;j++){
+            f[j]=max(f[j-a[i]]+b[i],f[j]);
+        }
+    }
+    cout<<f[w]<<endl;
+    return 0;
+}
+\end{lstlisting}
+\subsection{多重背包}
+\begin{lstlisting}[caption={二进制优化多重背包}]
+const ll INF=1e15;
+void solve(){
+    int n,w;
+    cin>>n>>w;
+    vector<ll>dp(w+1,INF);
+    dp[0]=0;
+    for(int i=1;i<=n;i++){
+        int l,c;cin>>l>>c;
+        for(int k=1;c>0;k*=2){
+            ll cur=min(c,k);
+            for(int j=w;j>=1LL*cur*l;j--){
+                dp[j]=min(dp[j],dp[j-1LL*cur*l]+cur);
+            }
+            c-=cur;
+        }
+    }
+    if(dp[w]>=INF) cout<<-1<<endl;
+    else cout<<dp[w]<<endl;
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    solve();
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{换根dp}
+\begin{lstlisting}[caption={换根dp},label={换根dp}]
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+const int N=1e6+5;
+vector<ll>G[N];
+vector<ll>ans,siz;
+void add(int x,int y){
+    G[x].emplace_back(y);
+    G[y].emplace_back(x);
+}
+void dfs(int u,int f){
+    siz[u]=1;
+    for(auto &v:G[u]){
+        if(v==f) continue;
+        dfs(v,u);
+        siz[u]+=siz[v];
+    }
+}
+void __dfs(int u,int f){
+    for(auto &v:G[u]){
+        if(v==f) continue;
+        ans[v]=(ans[u]+siz[1]-siz[v]*2);
+        __dfs(v,u);
+    }
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    int n;cin>>n;
+    ans.resize(n+1);
+    siz.resize(n+1);
+    for(int i=1;i<n;i++){
+        int x,y;cin>>x>>y;
+        add(x,y);
+    }
+    dfs(1,0);
+    ans[1]=siz[1];
+    __dfs(1,0);
+    cout<<max_element(ans.begin()+1,ans.begin()+1+n)-ans.begin()<<endl;
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{区间dp}
+\begin{lstlisting}[caption={区间dp典},label={区间dp}]
+//P1995 石子合并
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+const int N=105;
+const ll INF=1e12;
+ll a[N<<1],pre[N<<1];
+ll Mx[N<<1][N<<1],Mn[N<<1][N<<1];
+ll mx(int l,int r){
+    if(Mx[l][r]!=-1) return Mx[l][r];
+    if(l==r) return a[l];
+    ll ans=0;
+    for(int k=l;k+1<=r;k++){
+        ans=max(ans,mx(l,k)+mx(k+1,r));
+    }
+    return Mx[l][r]=ans+(pre[r]-pre[l-1]);
+}
+ll mn(int l,int r){
+    if(Mn[l][r]!=-1) return Mn[l][r];
+    if(l==r) return a[l];
+    ll ans=INF;
+    for(int k=l;k+1<=r;k++){
+        ans=min(ans,mn(l,k)+mn(k+1,r));
+    }
+    return Mn[l][r]=ans+(pre[r]-pre[l-1]);
+}
+void solve(){
+    int n;cin>>n;
+    for(int i=1;i<=n;i++) cin>>a[i],a[i+n]=a[i];
+    for(int i=1;i<=n*2;i++) pre[i]=pre[i-1]+a[i];
+    memset(Mx,-1,sizeof Mx);
+    memset(Mn,-1,sizeof Mn);
+    ll ans1=0,ans2=INF;
+    for(int i=1;i<=n;i++){
+        int l=i,r=n+i-1;
+        ans1=max(ans1,mx(l,r)-(pre[r]-pre[l-1]));
+        ans2=min(ans2,mn(l,r)-(pre[r]-pre[l-1]));
+    }
+    cout<<ans2<<endl<<ans1<<endl;
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    solve();
+    return 0;
+}
+\end{lstlisting}
+\subsection{SOS dp}
+
+\subsubsection*{例}
+
+给定长度为 $N$ 的整数序列 $A = (A_1, A_2, \dots, A_N)$，求满足 $1 \leq i < j \leq N$ 且列加法计算 $A_i + A_j$ 时不发生进位的整数对 $(i, j)$ 的个数。
+
+\subsubsection*{限制条件}
+\begin{itemize}
+    \item $1 \leq N \leq 100$
+    \item $1 \leq W \leq 50000$
+    \item $1 \leq L_i \leq W$
+    \item $1 \leq C_i \leq 10000$
+    \item 所有输入均为整数
+\end{itemize}
+\begin{lstlisting}[caption={SOSdp解决数位不发生进位问题}]
+//ARC136D
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+const int N=1e6+1;
+int Flip(int x){
+    int p=1,res=0;
+    for(int i=0;i<6;i++){
+        res+=(9-x%10)*p;
+        x/=10;
+        p*=10;
+    }
+    return res;
+}//这个数的反集,如123->876
+bool judge(int x){
+    while(x){
+        if(x%10>=5) return false;
+        x/=10;
+    }
+    return true;
+}//判定这个数与自身相加是否发生进位情况
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    int n;cin>>n;
+    vector<ll>dp(N);
+    vector<int>a(n+1);
+    for(int i=1,x;i<=n;i++){
+        cin>>a[i];
+        dp[a[i]]++;
+    } 
+    int p=1;
+    for(int i=1;i<=6;i++){//本质是对每个十进制数位进行一次强缀和,又称高维前缀和(SOS dp)
+        for(int j=0;j<N;j++){
+            if((j/p)%10) dp[j]+=dp[j-p];
+        }
+        p*=10;
+    }
+    ll ans=0;
+    for(int i=1;i<=n;i++){
+        int x=Flip(a[i]);
+        ans+=dp[x];
+        if(judge(a[i])) ans--;
+    }
+    cout<<ans/2<<endl;
+    return 0;
+}
+\end{lstlisting}
+\subsection{数位dp}
+\begin{lstlisting}[caption={统计a-b中各个数位出现个数}]
+ll dp[18][18][2][2];
+int digit[18],target;
+ll dfs(int pos,int cnt,bool limit,bool lead){
+    if(pos==-1) return cnt;
+    if(dp[pos][cnt][limit][lead]!=-1) return dp[pos][cnt][limit][lead];
+    int up=(limit)?digit[pos]:9;
+    ll res=0;
+    for(int i=0;i<=up;i++){
+        int ncnt=cnt;
+        if(i==target){
+            if(!(lead&&i==0)){
+                ncnt++;
+            }
+        }
+        bool nlead=lead&&(i==0);
+        bool nlimit=limit&&(i==up);
+        res+=dfs(pos-1,ncnt,nlimit,nlead);
+    }
+    return dp[pos][cnt][limit][lead]=res;
+}
+ll solve(ll x){
+    if(x<0) return 0;
+    int len=0;
+    while(x>0){
+        digit[len++]=x%10;
+        x/=10;
+    }
+    memset(dp,-1,sizeof(dp));
+    return dfs(len-1,0,true,true);
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    ll a,b;cin>>a>>b;
+    for(int i=0;i<10;i++){
+        target=i;
+        cout<<solve(b)-solve(a-1)<<' ';
+    }
+    cout<<endl;
+    return 0;
+}
+\end{lstlisting}
 \newpage
 \section{数学}
 
@@ -1343,7 +2258,6 @@ void init(){
 }
 \end{lstlisting}
 
-\newpage
 \subsection{筛法求莫比乌斯函数}
 \begin{lstlisting}[caption={莫比乌斯函筛},label={lst:莫比乌斯筛}]
 const int N=1e6+5;
@@ -1505,10 +2419,325 @@ C_n = \frac{4n-2}{n+1}C_{n-1},\quad n>0,\ C_0=1. \tag{4}
 \]
 数列的前几项为：1,1,2,5,14,42,132,429,1430,…
 \subsection{排列组合类-含Lucas}
+\begin{lstlisting}
+const ll mod=998244353;
+vector<ll>fac,invfac;
+ll q_pow(ll x,ll y){
+    ll s=1;
+    x%=mod;
+    while(y>0){
+        if(y&1){
+            s=s*x%mod;
+        }
+        x=x*x%mod;
+        y>>=1;
+    }
+    return s;
+}
+void init(int n){
+    fac.resize(n+1);
+    invfac.resize(n+1);
+    fac[0]=invfac[0]=1;
+    for(int i=1;i<=n;i++) fac[i]=fac[i-1]*i%mod;
+    invfac[n]=q_pow(fac[n],mod-2);
+    for(int i=n-1;i>=1;i--) invfac[i]=invfac[i+1]*(i+1)%mod;
+}
+ll C(ll n,ll m){
+    if(n<m) return 0;
+    if(n<mod&&m<mod) return fac[n]*invfac[m]%mod*invfac[n-m]%mod;
+    return C(n/mod,m/mod)*C(n%mod,m%mod)%mod;
+}
+\end{lstlisting}
 \subsection{高斯消元}
+\begin{lstlisting}[caption={高斯消元},label={高斯消元}]
+const int N=110;
+const double eps=1e-8;
+int n;
+double a[N][N];
+ll gauss(){
+    ll c,r;
+    for(c=0,r=0;c<n;c++){
+        ll t=r;
+        for(int i=r;i<n;i++){
+            if(abs(a[i][c])>abs(a[t][c])) t=i;
+        }
+        if(abs(a[t][c])<eps) continue;
+        for(int j=c;j<n+1;j++) swap(a[t][j],a[r][j]);//将绝对值最大的换到最顶端
+        for(int j=n;j>=c;j--) a[r][j]/=a[r][c];//将当前行首位变成1
+        for(int i=r+1;i<n;i++){
+            if(abs(a[i][c])>eps){
+                for(int j=n;j>=c;j--) a[i][j]-=a[r][j]*a[i][c];
+            }
+        }
+        r++;
+    }
+    if(r<n){
+        for(int i=r;i<n;i++) if(abs(a[i][n])>eps) return 2;
+        return 1;
+    }
+    for(int i=n-1;i>=0;i--){
+        for(int j=i+1;j<n;j++) a[i][n]-=a[i][j]*a[j][n];
+    }
+    return 0;
+}
+void solve(){
+    cin>>n;
+    for(int i=0;i<n;i++){
+        for(int j=0;j<n+1;j++){
+            cin>>a[i][j];
+        }
+    }
+    ll t=gauss();
+    cout<<fixed<<setprecision(2);
+    if(t==0) {
+        for(int i=0;i<n;i++){
+            if(abs(a[i][n])<eps) a[i][n]=abs(a[i][n]);
+            cout<<a[i][n]<<endl;
+        }
+    }
+    else cout<<"No Solution"<<endl;
+}
+\end{lstlisting}
+
 \subsection{线性基}
+\begin{lstlisting}[caption={线性基},label={线性基}]
+struct LB{
+    vector<ll>a;
+    bool flag;
+    LB(){
+        flag=false;
+        a.resize(63);
+    }
+    bool insert(ll x){
+        for(int i=61;i>=0;i--){
+            if(x>>i&1LL){
+                if(!a[i]) {
+                    a[i]=x;
+                    return true;
+                } 
+                x^=a[i];
+            }
+        }
+        flag=true;
+        return false;
+    }
+    ll ask_max(){
+        ll ans=0;
+        for(int i=61;i>=0;i--){
+            if((ans^a[i])>ans) ans^=a[i];
+        }
+        return ans;
+    }
+    ll ask_min(){
+        if(flag) return 0;
+        for(int i=0;i<=61;i++){
+            if(a[i]) return a[i];
+        }
+        return 0;
+    }
+};
+\end{lstlisting}
+
 \subsection{数论分块}
+\section*{题面简述}
+
+给定一个正整数 $x$，求 $\sum_{i=1}^{x} d(i)$，其中 $d(i)$ 表示 $i$ 的因数个数。
+
+
+\subsection*{第一步：转化求和式}
+
+由因数个数的定义 $d(i) = \sum_{d \mid i} 1$，将求和交换顺序：
+\[
+    \sum_{i=1}^{x} d(i) = \sum_{i=1}^{x} \sum_{d \mid i} 1 = \sum_{d=1}^{x} \left\lfloor \frac{x}{d} \right\rfloor
+\]
+
+即问题转化为求 $\sum_{d=1}^{x} \left\lfloor \frac{x}{d} \right\rfloor$。
+
+\subsection*{第二步：整除分块}
+
+$\left\lfloor \frac{x}{d} \right\rfloor$ 的取值至多只有 $O(\sqrt{x})$ 种。对于每一种取值 $v = \left\lfloor \frac{x}{l} \right\rfloor$，所有满足 $\left\lfloor \frac{x}{d} \right\rfloor = v$ 的 $d$ 构成一个连续区间 $[l, r]$，其中：
+\[
+    r = \min\!\left(\left\lfloor \frac{x}{v} \right\rfloor,\; x\right)
+\]
+
+在该区间内 $\left\lfloor \frac{x}{d} \right\rfloor$ 恒为 $v$，因此该块的贡献为：
+\[
+    v \times (r - l + 1)
+\]
+
+遍历所有块，累加贡献即得答案：
+\[
+    \mathrm{Ans} = \sum_{\text{block } [l,r]} \left\lfloor \frac{x}{l} \right\rfloor \times (r - l + 1)
+\]
+
+每次令 $l \leftarrow r + 1$ 跳到下一个块，直到 $l > x$。
+
+\section*{复杂度分析}
+
+$\left\lfloor \frac{x}{d} \right\rfloor$ 的不同取值个数为 $O(\sqrt{x})$（当 $d \le \sqrt{x}$ 时至多 $\sqrt{x}$ 种，当 $d > \sqrt{x}$ 时 $\left\lfloor \frac{x}{d} \right\rfloor < \sqrt{x}$，同样至多 $\sqrt{x}$ 种），因此整除分块的块数为 $O(\sqrt{x})$，每块内仅需 $O(1)$ 计算。
+
+总时间复杂度为 $O(\sqrt{x})$，空间复杂度为 $O(1)$。
+\begin{lstlisting}[caption={整除分块},label={整除分块}]
+void solve(){
+    ll n;cin>>n;
+    ll ans=0;
+    for(int l=1,r;l<=n;l=r+1) {
+        ll v=(n/l);
+        r=min((n/v),n);
+        ans+=v*(r-l+1);
+    }
+    cout<<ans<<endl;
+}
+\end{lstlisting}
+
 \subsection{莫比乌斯反演}
+\section*{题面简述}
+
+给定 $N, M$，求满足 $1 \le x \le N$，$1 \le y \le M$ 且 $\gcd(x, y)$ 为质数的有序对 $(x, y)$ 的个数。
+
+多组询问，$T \le 10^4$，$N, M \le 10^7$。
+
+
+\subsection*{第一步：枚举质数}
+
+设答案为 $\mathrm{Ans}$，直接按定义展开：
+\[
+    \mathrm{Ans} = \sum_{p \in \mathcal{P}} \sum_{x=1}^{N} \sum_{y=1}^{M} [\gcd(x, y) = p]
+\]
+其中 $\mathcal{P}$ 为质数集合。令 $x = pa$，$y = pb$，则：
+\[
+    \mathrm{Ans} = \sum_{p \in \mathcal{P}} \sum_{a=1}^{\lfloor N/p \rfloor} \sum_{b=1}^{\lfloor M/p \rfloor} [\gcd(a, b) = 1]
+\]
+
+\subsection*{第二步：莫比乌斯反演}
+
+利用经典恒等式 $[\gcd(a,b)=1] = \sum_{d \mid \gcd(a,b)} \mu(d)$，代入得：
+\[
+    \mathrm{Ans} = \sum_{p \in \mathcal{P}} \sum_{d=1}^{\min(\lfloor N/p \rfloor, \lfloor M/p \rfloor)} \mu(d) \left\lfloor \frac{N}{pd} \right\rfloor \left\lfloor \frac{M}{pd} \right\rfloor
+\]
+
+\subsection*{第三步：换元合并}
+
+令 $T = pd$，则 $d = T/p$，对于固定的 $T$，$p$ 遍历 $T$ 的所有质因子。交换求和顺序：
+\[
+    \mathrm{Ans} = \sum_{T=1}^{\min(N,M)} \left\lfloor \frac{N}{T} \right\rfloor \left\lfloor \frac{M}{T} \right\rfloor \sum_{p \mid T,\, p \in \mathcal{P}} \mu\!\left(\frac{T}{p}\right)
+\]
+
+定义函数：
+\[
+    f(T) = \sum_{p \mid T,\, p \in \mathcal{P}} \mu\!\left(\frac{T}{p}\right)
+\]
+
+则答案化为：
+\[
+    \mathrm{Ans} = \sum_{T=1}^{\min(N,M)} f(T) \left\lfloor \frac{N}{T} \right\rfloor \left\lfloor \frac{M}{T} \right\rfloor
+\]
+
+\subsection*{第四步：预处理 $f$ 及其前缀和}
+
+$f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举每个质数 $p$，再枚举 $p$ 的倍数 $T = kp$，将 $\mu(k)$ 累加到 $f(T)$ 上。这一步复杂度为：
+\[
+    \sum_{p \in \mathcal{P}} \left\lfloor \frac{n}{p} \right\rfloor \approx O\!\left(\frac{n \ln \ln n}{1}\right) = O(n \log \log n)
+\]
+
+随后求出 $f$ 的前缀和 $F(n) = \sum_{T=1}^{n} f(T)$。
+
+\subsection*{第五步：整除分块回答询问}
+
+对每组询问，利用 $\lfloor N/T \rfloor$ 和 $\lfloor M/T \rfloor$ 的取值分块性质（整除分块/数论分块），将 $T$ 的求和区间划分为 $O(\sqrt{N} + \sqrt{M})$ 个块，每块内 $\lfloor N/T \rfloor$ 和 $\lfloor M/T \rfloor$ 均为常数，利用前缀和 $F$ 即可 $O(1)$ 求出每块的贡献：
+\[
+    \mathrm{Ans} = \sum_{\text{block } [l,r]} \left\lfloor \frac{N}{l} \right\rfloor \left\lfloor \frac{M}{l} \right\rfloor \bigl(F(r) - F(l-1)\bigr)
+\]
+
+\section*{复杂度分析}
+
+\begin{itemize}
+    \item \textbf{预处理}：线性筛求 $\mu$ 和质数表为 $O(n)$；枚举质数倍数计算 $f$ 为 $O(n \log \log n)$；前缀和为 $O(n)$。总预处理复杂度 $O(n \log \log n)$，其中 $n = \max(N, M) = 10^7$。
+    \item \textbf{单次询问}：整除分块为 $O(\sqrt{n})$。
+    \item \textbf{总复杂度}：$O(n \log \log n + T\sqrt{n})$。
+\end{itemize}
+
+对于本题 $n = 10^7$，$T = 10^4$：
+\begin{itemize}
+    \item 预处理：$10^7 \times \log \log(10^7) \approx 10^7 \times 3 \approx 3 \times 10^7$。
+    \item 查询：$10^4 \times \sqrt{10^7} \approx 10^4 \times 3162 \approx 3.16 \times 10^7$。
+\end{itemize}
+
+总操作量约 $6 \times 10^7$，可以通过。空间复杂度为 $O(n)$。
+\begin{lstlisting}[caption={莫比乌斯反演},label={莫比乌斯反演}]
+//P2398 GCD-SUM
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+const int N=1e5+5;
+ll p[N],vis[N],cnt;
+ll mu[N],pre[N],phi[N];
+void init(int n){
+    mu[1]=phi[1]=1;
+    for(int i=2;i<=n;i++){
+        if(!vis[i]){
+            p[cnt++]=i;
+            mu[i]=-1;
+            phi[i]=i-1;
+        }
+        for(int j=0;i*p[j]<=n;j++){
+            int m=i*p[j];
+            vis[m]=1;
+            if(i%p[j]==0){
+                mu[m]=0;
+                phi[m]=phi[i]*p[j];
+                break;
+            }
+            phi[m]=phi[i]*(p[j]-1);
+            mu[m]=-mu[i];
+        }
+    }
+    for(int i=1;i<=n;i++) pre[i]=pre[i-1]+phi[i];
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    ll ans=0;
+    ll n;cin>>n;
+    init(n+5);
+    for(int l=1,r;l<=n;l=r+1){
+        ll v=n/l;
+        r=n/v;
+        ans+=v*v*(pre[r]-pre[l-1]);
+    }
+    cout<<ans<<endl;
+    return 0;
+}
+\end{lstlisting}
 \subsection{exgcd}
-\subsection{位运算基础}
+\begin{lstlisting}[caption={exgcd}]
+//P1516青蛙的约会
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+ll exgcd(ll a,ll b,ll &x,ll &y){
+    if(!b){
+        x=1,y=0;
+        return a;
+    }
+    ll d=exgcd(b,a%b,y,x);
+    y-=a/b*x;
+    return d;
+}
+void solve(){
+    int x,y,m,n,l;
+    cin>>x>>y>>m>>n>>l;
+    ll X,Y;
+    ll d=exgcd(n-m,l,X,Y);
+    if((x-y)%d) cout<<"Impossible"<<endl;
+    else{
+        ll s=(x-y)/d;
+        ll mod=abs(l/d);
+        X*=s;
+        Y*=s;
+        cout<<(X%mod+mod)%mod<<endl;
+    }
+}
+\end{lstlisting}
 \end{document}
