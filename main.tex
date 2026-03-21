@@ -10,7 +10,12 @@
 \usepackage{xcolor}                    % 颜色
 \usepackage{graphicx}                  % 插图（可选）
 \usepackage{tocloft}                   % 目录美化
+\usepackage{fancyhdr}    % 引入页眉页脚控制宏包
 
+\pagestyle{fancy}        % 启用自定义样式
+\fancyhf{}               % 清空当前所有的页眉页脚设置
+\fancyfoot[R]{\thepage}  % 在页脚右侧(R)显示页码
+\renewcommand{\headrulewidth}{0pt} % 去掉页眉下方的那条横线（因为我们不用页眉）
 % ==================== 代码高亮设置（已彻底修复空格方格）====================
 \lstset{
     language=C++,
@@ -125,6 +130,29 @@ int main(){
     return 0;
 }
 \end{lstlisting}
+\subsection{编译指令}
+\begin{lstlisting}[caption={编译指令}]
+g++ -std=c++20 -Wall -Wextra -O2 a.cpp -o a.exe && a.exe//编译程序并运行
+/*
+-Wall：开启大部分常用警告
+
+-Wextra：开启额外警告，帮助发现潜在问题
+
+-O2：二级优化，平衡编译速度与运行效率，竞赛中最常用
+
+-o a.exe：指定输出文件名（在 Linux 下可改为 -o a）
+*/
+\end{lstlisting}
+
+\subsection{cpp扩栈(win)}
+\begin{lstlisting}[caption={扩栈指令}]
+int size(256<<20);
+__asm__ ( "movq %0, %%rsp\n"::"r"((char*)malloc(size)+size)); 
+/*
+主程序
+*/
+exit(0);
+\end{lstlisting}
 
 \newpage
 
@@ -195,6 +223,18 @@ struct DSU{
         siz[fy]+=siz[fx];
         return true;
     }
+    int nxt(int l,int r){
+        ll res=0;
+        l=find(l);
+        int fl=l;
+        while(l<=r){
+            ++res;
+            fl=find(l+1);
+            f[l]=fl;
+            l=fl;
+        }
+        return res;
+    }//l需要多少步跳到r？模拟链表的模式删除l-r所有中转点
     bool same(int x,int y){
         return find(x)==find(y);
     }
@@ -249,6 +289,7 @@ void solve(){
     }
 }
 \end{lstlisting}
+
 
 \subsection{线段树(普通区间和查询)}
 \begin{lstlisting}[caption={common-Seg},label={lst:Seg-basic}]
