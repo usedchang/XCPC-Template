@@ -1,7 +1,7 @@
 \documentclass[12pt,a4paper]{ctexart}  % 中文支持 + 文章格式
 \usepackage[utf8]{inputenc}
 \usepackage{geometry}
-\geometry{a4paper, margin=2.5cm}  % 页边距
+\geometry{a4paper, margin=1.8cm}  % 减小页边距
 
 \usepackage{amsmath, amssymb, amsthm}  % 数学公式
 \usepackage{algorithm}                 % 算法环境
@@ -16,10 +16,17 @@
 \fancyhf{}               % 清空当前所有的页眉页脚设置
 \fancyfoot[R]{\thepage}  % 在页脚右侧(R)显示页码
 \renewcommand{\headrulewidth}{0pt} % 去掉页眉下方的那条横线（因为我们不用页眉）
+
+% 调整章节标题间距
+\usepackage{titlesec}
+\titlespacing{\section}{0pt}{10pt plus 2pt minus 2pt}{5pt plus 1pt minus 1pt}
+\titlespacing{\subsection}{0pt}{8pt plus 1pt minus 1pt}{4pt plus 1pt minus 1pt}
+\titlespacing{\subsubsection}{0pt}{6pt plus 1pt minus 1pt}{3pt plus 1pt minus 1pt}
+
 % ==================== 代码高亮设置（已彻底修复空格方格）====================
 \lstset{
     language=C++,
-    basicstyle=\ttfamily\small,
+    basicstyle=\ttfamily\footnotesize,  % 使用更小的字体
     keywordstyle=\color{blue}\bfseries,
     commentstyle=\color{green!60!black},
     stringstyle=\color{red},
@@ -32,7 +39,11 @@
     upquote=true,
     keepspaces=true,
     columns=fullflexible,
-    tabsize=4
+    tabsize=4,
+    xleftmargin=1em,  % 减小代码块左边距
+    framexleftmargin=1em,  % 减小框架左边距
+    aboveskip=3pt,  % 减小代码块上方间距
+    belowskip=3pt   % 减小代码块下方间距
 }
 
 % 自定义定理环境
@@ -40,25 +51,29 @@
 \newtheorem{lemma}[theorem]{引理}
 \newtheorem{example}{例}
 
-
 \begin{document}
 \begin{titlepage}
     \centering                  % 居中对齐
-    \vspace*{4cm}               % 顶部留白（调整这个数值改变垂直位置）
+    \vspace*{2cm}               % 减小顶部留白
     
     {\Huge \textbf{XCPC算法模板}} \par  % 大标题，加粗
-    \vspace{2cm}                % 标题与作者之间的间距
+    \vspace{1.5cm}              % 减小标题与作者之间的间距
     
     {\Large usedchang} \par     % 作者名
-    \vspace{1.5cm}
+    \vspace{1cm}                % 减小作者与日期之间的间距
     
     {\Large \today} \par        % 日期
     
-    \vfill                      % 底部填充，将内容“顶”到页面中上部
+    \vfill                      % 底部填充，将内容"顶"到页面中上部
 \end{titlepage}
 
-
 \tableofcontents  % 自动生成目录
+\vspace{5pt}  % 减小目录后的空白
+
+% 以下内容保持不变...
+
+
+
 \vspace{10cm}
 \section{杂项}
 \subsection{IO加速}
@@ -2901,4 +2916,295 @@ void solve(){
     }
 }
 \end{lstlisting}
+
+
+\newpage
+\section{Other Trick}
+
+\subsection{多路归并(含二分解)}
+\section*{题面简述}
+
+给定两个长度为 $N$ 的单调不降序列 $A, B$，从 $A, B$ 中各取一个数相加可得到 $N^2$ 个和，求这 $N^2$ 个和中最小的 $N$ 个。
+
+\subsection*{第一步：小根堆初始化与去重策略}
+
+由于序列 $A, B$ 均单调不降，最小的和必然是 $A_1 + B_1$（下标从 1 开始）。我们使用一个小根堆（优先队列）维护候选和，堆中元素为三元组 $(sum, i, j)$，表示 $A_i + B_j$ 的值及其对应下标。
+
+为避免重复访问同一 $(i, j)$ 对，采用如下策略：
+\begin{itemize}
+    \item 初始将 $(A_1 + B_1, 1, 1)$ 入堆，并标记 $(1, 1)$ 为已访问。
+    \item 每次取出堆顶 $(sum, i, j)$ 加入答案后：
+    \begin{enumerate}
+        \item 若 $j + 1 \leq N$ 且 $(i, j+1)$ 未访问，将 $(A_i + B_{j+1}, i, j+1)$ 入堆并标记。
+        \item 若 $j = 1$（当前是第 $i$ 行首个元素）且 $i + 1 \leq N$，将 $(A_{i+1} + B_j, i+1, j)$ 入堆并标记。
+    \end{enumerate}
+\end{itemize}
+
+该策略确保每个 $(i, j)$ 仅入堆一次，避免重复计算。
+
+\subsection*{第二步：提取前 $N$ 个最小和}
+
+重复执行 $N$ 次以下操作：
+\begin{enumerate}
+    \item 取出堆顶元素，将其和加入答案数组。
+    \item 按上述策略将后续候选和入堆。
+\end{enumerate}
+
+最终答案数组即为所求的 $N$ 个最小和。
+
+\section*{正确性说明}
+
+由于 $A, B$ 单调不降，对任意 $(i, j)$ 有 $A_i + B_j \leq A_{i+1} + B_j$ 且 $A_i + B_j \leq A_i + B_{j+1}$。小根堆保证每次取出当前最小候选和，去重策略确保无重复入堆，且不遗漏任何可能的最小和。
+
+
+\begin{lstlisting}[caption={堆}]
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, pair<int, int>> P;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N;cin >> N;
+    vector<ll> A(N), B(N);
+    for (int i = 0; i < N; ++i) cin >> A[i];
+    for (int i = 0; i < N; ++i) cin >> B[i];
+    priority_queue<P, vector<P>, greater<P>> pq;
+    pq.push({A[0] + B[0], {0, 0}});
+    for (int k = 0; k < N; ++k) {
+        P top = pq.top();
+        pq.pop();
+        ll sum = top.first;
+        int i = top.second.first;
+        int j = top.second.second;
+        if (k > 0) cout << ' ';
+        cout << sum;
+        if (j + 1 < N) {
+            pq.push({A[i] + B[j+1], {i, j+1}});
+        }
+        if (j == 0 && i + 1 < N) {
+            pq.push({A[i+1] + B[j], {i+1, j}});
+        }
+    }
+    cout << endl;
+    return 0;
+}
+\end{lstlisting}
+
+\subsection*{第一步：二分查找确定第 $N$ 小的和的值 $x$}
+
+定义函数 $\mathrm{calc}(mid)$，用于计算序列 $A, B$ 中满足 $A_i + B_j \leq mid$ 的数对 $(i, j)$ 的数量。利用单调性，该函数可通过双指针法在 $O(N)$ 时间内实现：
+\begin{itemize}
+    \item 初始化指针 $j = N - 1$（指向 $B$ 的末尾）。
+    \item 遍历 $A$ 的每个元素 $A_i$：
+    \begin{itemize}
+        \item 若 $A_i + B_j > mid$，则 $j$ 左移（减小 $j$）。
+        \item 此时 $B_0$ 到 $B_j$ 与 $A_i$ 的和均 $\leq mid$，贡献 $j + 1$ 个计数。
+    \end{itemize}
+\end{itemize}
+
+二分查找的初始区间设为 $[l, r]$，其中 $l = A_0 + B_0$（最小和），$r = A_{N-1} + B_{N-1}$（最大和）。二分过程如下：
+\begin{enumerate}
+    \item 取中点 $mid = l + \frac{r - l}{2}$。
+    \item 若 $\mathrm{calc}(mid) \geq N$，说明第 $N$ 小的和 $\leq mid$，令 $r = mid$。
+    \item 否则，说明第 $N$ 小的和 $> mid$，令 $l = mid + 1$。
+    \item 当 $l = r$ 时，$x = l$ 即为第 $N$ 小的和的值。
+\end{enumerate}
+
+\subsection*{第二步：收集所有严格小于 $x$ 的和}
+
+再次利用双指针法，遍历序列 $A$：
+\begin{itemize}
+    \item 对每个 $A_i$，找到最大的 $j$ 使得 $A_i + B_j < x$。
+    \item 将 $A_i + B_0, A_i + B_1, \dots, A_i + B_j$ 全部加入结果数组 $\mathrm{res}$。
+\end{itemize}
+
+\subsection*{第三步：补充等于 $x$ 的和至 $N$ 个}
+
+计算还需补充的数量 $\mathrm{need} = N - \mathrm{res.size()}$。若 $\mathrm{need} > 0$，再次遍历序列 $A$：
+\begin{itemize}
+    \item 对每个 $A_i$，找到最大的 $j$ 使得 $A_i + B_j \leq x$。
+    \item 从 $j$ 开始向左遍历，若 $A_i + B_k == x$，则将 $x$ 加入 $\mathrm{res}$，并减少 $\mathrm{need}$，直到 $\mathrm{need} = 0$。
+\end{itemize}
+
+\subsection*{第四步：排序并输出}
+
+对结果数组 $\mathrm{res}$ 进行排序，取前 $N$ 个元素依次输出，即为所求的 $N$ 个最小和。
+
+\section*{正确性说明}
+
+二分查找确保找到的 $x$ 是满足“和 $\leq x$ 的数对数量 $\geq N$”的最小值，因此 $x$ 必为第 $N$ 小的和。通过先收集所有小于 $x$ 的和，再补充等于 $x$ 的和，确保结果数组包含恰好 $N$ 个最小和，排序后顺序正确。
+
+\section*{复杂度分析}
+
+\begin{itemize}
+    \item \textbf{时间复杂度：}
+    \begin{itemize}
+        \item 二分查找部分：共进行 $O(\log S)$ 次二分（$S$ 为和的范围，约 $2 \times 10^9$），每次 $\mathrm{calc}$ 函数耗时 $O(N)$，总耗时 $O(N \log S)$。
+        \item 收集与补充和部分：两次双指针遍历均为 $O(N)$，最后排序为 $O(N \log N)$。
+        \item 综上，总时间复杂度为：
+        \[
+            O(N \log N + N \log S)
+        \]
+    \end{itemize}
+    \item \textbf{空间复杂度：} 结果数组 $\mathrm{res}$ 需 $O(N)$ 空间，总空间复杂度为 $O(N)$。
+\end{itemize}
+
+\begin{lstlisting}[caption={二分}]
+#include<bits/stdc++.h>
+using namespace std;
+long long calc(const vector<long long>& a, const vector<long long>& b, long long mid) {
+    int n = a.size();
+    long long cnt = 0;
+    int j = n - 1;
+    for (int i = 0; i < n; ++i) {
+        while (j >= 0 && a[i] + b[j] > mid) j--;
+        cnt += j + 1;
+    }
+    return cnt;
+}
+int main() {
+    cin.tie(nullptr)->ios::sync_with_stdio(false);
+    int n;cin >> n;
+    vector<long long> a(n), b(n);
+    for (int i = 0; i < n; ++i) cin >> a[i];
+    for (int i = 0; i < n; ++i) cin >> b[i];
+    long long l = a[0] + b[0], r = a.back() + b.back();
+    while (l < r) {
+        long long mid = l + (r - l) / 2; 
+        if (calc(a, b, mid) >= n) {
+            r = mid;
+        } else {
+            l = mid + 1;
+        }
+    }
+    long long x = l;
+    vector<long long> res;
+    res.reserve(n);
+    int j = n - 1;
+    for (int i = 0; i < n; ++i) {
+        while (j >= 0 && a[i] + b[j] >= x) j--;
+        for (int k = 0; k <= j; ++k) {
+            res.push_back(a[i] + b[k]);
+        }
+    }
+    int need = n - res.size();
+    j = n - 1;
+    for (int i = 0; i < n && need > 0; ++i) {
+        while (j >= 0 && a[i] + b[j] > x) j--;
+        int k = j;
+        while (k >= 0 && a[i] + b[k] == x && need > 0) {
+            res.push_back(x);
+            need--;
+            k--;
+        }
+    }
+    sort(res.begin(), res.end());
+    for (int i = 0; i < n; ++i) {
+        cout << res[i] << " ";
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{使用栈做递归防溢出}
+
+\begin{lstlisting}[caption={原始代码}]
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+const ll INF=1e18;
+const int N=1e7;
+void solve(){
+    int n;cin>>n;
+    vector<ll>a(n+1);
+    vector<vector<int>>G(n+1);
+    vector<ll>f(n+1);
+    ll sum=0;
+    for(int i=1;i<=n;i++) cin>>a[i],sum+=a[i];
+    for(int i=1;i<n;i++){
+        int x,y;cin>>x>>y;
+        G[x].push_back(y);
+        G[y].push_back(x);    
+    }
+    vector<ll>dp(n+1);
+    vector<ll>siz(n+1);
+    auto dfs=[&](auto &&dfs,int u,int fa) ->void {
+        dp[u]=INF;
+        f[u]=a[u];
+        siz[u]=1;
+        for(int v:G[u]){
+            if(v==fa) continue;
+            dfs(dfs,v,u);
+            f[u]+=f[v];
+            siz[u]+=siz[v];
+            dp[u]=min(dp[u],dp[v]);
+        }
+        dp[u]=min(dp[u],f[u]/siz[u]);
+    };
+    dfs(dfs,1,0);
+    for(int i=1;i<=n;i++) cout<<dp[i]<<' ';
+    cout<<endl;
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    int size(256<<20);
+    __asm__ ( "movq %0, %%rsp\n"::"r"((char*)malloc(size)+size)); 
+    int T=1;cin>>T;
+    while(T--) solve();
+    exit(0);
+    return 0;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={栈递归版}]
+struct Statu{
+    int u,fa,op;//当前节点,父节点,操作方式
+};
+int x,y;
+void solve() {
+    int n; cin>>n;
+    vector<ll>a(n+1),f(n+1),dp(n+1);
+    vector<Statu>st(n+1);
+    vector<int>siz(n+1);
+    vector<vector<int>>G(n+1);
+    for(int i=1;i<=n;i++) cin>>a[i];
+    for(int i=1;i<n;i++){
+        cin>>x>>y;
+        G[x].push_back(y);
+        G[y].push_back(x);
+    }
+    st.push_back({1,0,0});
+    while(!st.empty()){
+        Statu &cur=st.back();
+        int u=cur.u,fa=cur.fa;
+        if(!cur.op){
+            dp[u]=INF;
+            f[u]+=a[u];
+            siz[u]++;
+            cur.op=1;
+            for(int v:G[u]){
+                if(v==fa) continue;
+                st.push_back({v,u,0});
+            }
+        }
+        else{
+            for(int v:G[u]){
+                if(v==fa) continue;
+                dp[u]=min(dp[u],dp[v]);
+                siz[u]+=siz[v];
+                f[u]+=f[v];
+            }
+            dp[u]=min(dp[u],f[u]/siz[u]);
+            st.pop_back();
+        }
+    }
+    for(int i=1;i<=n;i++) cout<<dp[i]<<' ';
+    cout<<endl;
+}
+\end{lstlisting}
+
 \end{document}
