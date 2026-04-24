@@ -1,8 +1,8 @@
-\documentclass[12pt,a4paper]{ctexart}  % 中文支持 + 文章格式
+\documentclass[11pt,a4paper,twocolumn]{ctexart}  % 中文支持 + 文章格式 + 双栏布局
 \usepackage[utf8]{inputenc}
 \usepackage{geometry}
-\geometry{a4paper, margin=1.8cm}  % 减小页边距
-
+\geometry{a4paper, margin=1.3cm}  % 调整页边距以适应双栏
+\setlength{\columnsep}{1cm}  % 设置左右栏之间的间距
 \usepackage{amsmath, amssymb, amsthm}  % 数学公式
 \usepackage{algorithm}                 % 算法环境
 \usepackage{algpseudocode}             % 伪代码
@@ -26,7 +26,7 @@
 % ==================== 代码高亮设置（已彻底修复空格方格）====================
 \lstset{
     language=C++,
-    basicstyle=\ttfamily\footnotesize,  % 使用更小的字体
+    basicstyle=\ttfamily\scriptsize,  % 使用更小的字体以适应双栏
     keywordstyle=\color{blue}\bfseries,
     commentstyle=\color{green!60!black},
     stringstyle=\color{red},
@@ -39,11 +39,12 @@
     upquote=true,
     keepspaces=true,
     columns=fullflexible,
-    tabsize=4,
-    xleftmargin=1em,  % 减小代码块左边距
-    framexleftmargin=1em,  % 减小框架左边距
-    aboveskip=3pt,  % 减小代码块上方间距
-    belowskip=3pt   % 减小代码块下方间距
+    tabsize=2,
+    xleftmargin=0.5em,  % 减小代码块左边距
+    framexleftmargin=0.5em,  % 减小框架左边距
+    aboveskip=2pt,  % 减小代码块上方间距
+    belowskip=2pt,  % 减小代码块下方间距
+    breakindent=0.5em  % 换行缩进
 }
 
 % 自定义定理环境
@@ -192,6 +193,22 @@ int main(){
 }
 \end{lstlisting}
 
+\begin{lstlisting}[caption={对拍linux}]
+#include<bits/stdc++.h>
+using namespace std;
+int main(){
+    //一直循环，直到找到不一样的数据
+    while (1) {
+        system("./data > data.txt");
+        system("./bf < data.txt > bf.txt");
+        system("./test < data.txt > test.txt");
+        if (system("diff test.txt bf.txt")) break;                          
+        //不一样就跳出循环
+    }//当 diff 返回非0 时，说明这时数据不一样
+    return 0;
+}
+\end{lstlisting}
+
 \subsection{热身赛测试语句}
 \begin{lstlisting}
 #include<bits/stdc++.h>
@@ -321,21 +338,7 @@ int main() {
     return 0;
 }
 \end{lstlisting}
-\begin{lstlisting}[caption={对拍linux}]
-#include<bits/stdc++.h>
-using namespace std;
-int main(){
-    //一直循环，直到找到不一样的数据
-    while (1) {
-        system("./data > data.txt");
-        system("./bf < data.txt > bf.txt");
-        system("./test < data.txt > test.txt");
-        if (system("diff test.txt bf.txt")) break;                          
-        //不一样就跳出循环
-    }//当 diff 返回非0 时，说明这时数据不一样
-    return 0;
-}
-\end{lstlisting}
+
 \subsection{编译指令}
 \begin{lstlisting}[caption={编译指令}]
 g++ -std=c++20 -Wall -Wextra -O2 a.cpp -o a.exe && a.exe//编译程序并运行
@@ -345,6 +348,17 @@ g++ -std=c++20 -Wall -Wextra -O2 a.cpp -o a.exe && a.exe//编译程序并运行
 -O2：二级优化，平衡编译速度与运行效率，竞赛中最常用
 -o a.exe：指定输出文件名（在 Linux 下可改为 -o a）
 */
+\end{lstlisting}
+
+\begin{lstlisting}[caption={.bat/.cmd (win)批处理文件编译}]
+@echo off
+g++ -std=c++17 -O2 -Wall -o sol.exe sol.cpp && sol.exe
+pause
+\end{lstlisting}
+
+\begin{lstlisting}[caption={.sh (linux)文件编译}]
+#!/bin/bash
+g++ -std=c++17 -O2 -Wall -o sol sol.cpp && ./sol
 \end{lstlisting}
 
 \subsection{cpp扩栈(win)}
@@ -1114,18 +1128,74 @@ int main(){
 \end{lstlisting}
 \subsection{树链剖分}
 \begin{lstlisting}[caption={树链剖分},label={lst:树链剖分}]
-//P1505 国家集训队
-const int N=2e5+5;
-int f[N],d[N],siz[N],dfn[N],son[N],top[N],cnt;
-ll a[N],b[N];
-const ll INF=1e18;
-struct Edge{
-    int x,y;ll w;
-};
+//P3384 [模板]重链剖分 / 树链剖分
+const int N=1e5+5;
+ll mod;
+int n,m,r;
 vector<int>G[N];
+int d[N],f[N],siz[N],dfn[N],rev[N],cnt,top[N],son[N];
+ll val[N],new_val[N];
+struct Seg{
+    struct S{
+        int l,r;
+        ll sum,laz;
+    };
+    int n;
+    vector<S>tre;
+    Seg(){};
+    Seg(int n):n(n){
+        tre.resize(n<<2);
+        build(0,n,1);
+    };
+    #define lc (p<<1)
+    #define rc (p<<1|1)
+    void pushup(int p){
+        tre[p].sum=(tre[lc].sum+tre[rc].sum)%mod;
+    }
+    void pushdown(int p){
+        if(tre[p].laz==0) return;
+        tre[lc].laz=(tre[lc].laz+tre[p].laz)%mod;
+        tre[rc].laz=(tre[rc].laz+tre[p].laz)%mod;
+        tre[lc].sum=(tre[lc].sum+tre[p].laz*(tre[lc].r-tre[lc].l+1)%mod)%mod;
+        tre[rc].sum=(tre[rc].sum+tre[p].laz*(tre[rc].r-tre[rc].l+1)%mod)%mod;
+        tre[p].laz=0;
+    }
+    void build(int l,int r,int p){
+        tre[p]={l,r,0LL,0LL};
+        if(l==r) {
+            tre[p].sum=new_val[l]%mod;
+            return;
+        }
+        int mid=l+r>>1;
+        build(l,mid,lc);
+        build(mid+1,r,rc);
+        pushup(p);
+    }
+    void Add(int l,int r,ll k,int p){
+        if(l<=tre[p].l&&r>=tre[p].r){
+            tre[p].sum=(tre[p].sum+k*(tre[p].r-tre[p].l+1)%mod)%mod;
+            tre[p].laz=(tre[p].laz+k)%mod;
+            return;
+        }
+        int mid=tre[p].l+tre[p].r>>1;
+        pushdown(p);
+        if(l<=mid) Add(l,r,k,lc);
+        if(r>mid) Add(l,r,k,rc); 
+        pushup(p);
+    }
+    ll qry(int l,int r,int p){
+        if(l<=tre[p].l&&r>=tre[p].r) return tre[p].sum;
+        ll ans=0;
+        int mid=tre[p].l+tre[p].r>>1;
+        pushdown(p);
+        if(l<=mid) ans=(ans+qry(l,r,lc))%mod;
+        if(r>mid) ans=(ans+qry(l,r,rc))%mod;
+        return ans;
+    }
+}S;
 void dfs1(int u,int fa){
-    d[u]=d[fa]+1;
     f[u]=fa;
+    d[u]=d[fa]+1;
     siz[u]=1;
     for(int v:G[u]){
         if(v==fa) continue;
@@ -1133,200 +1203,73 @@ void dfs1(int u,int fa){
         siz[u]+=siz[v];
         if(siz[v]>siz[son[u]]) son[u]=v;
     }
-}
+}//第一遍初始化节点信息
 void dfs2(int u,int node){
     top[u]=node;
     dfn[u]=(++cnt);
-    b[cnt]=a[u];
-    if(son[u]){
-        dfs2(son[u],node);
-    }
+    rev[cnt]=u;
+    new_val[cnt]=val[u];
+    if(son[u]) dfs2(son[u],node);
     for(int v:G[u]){
-        if(v==f[u]||v==son[u]) continue;
-        dfs2(v,v);
+        if(v!=son[u]&&v!=f[u]) dfs2(v,v);
     }
 }
-struct Info{
-    ll sum,mx,mn;
-    Info(ll sum,ll mx,ll mn):sum(sum),mx(mx),mn(mn){};
-    Info():sum(0LL),mx(-INF),mn(INF){};
-    friend Info operator+(const Info A,const Info B){
-        return Info(A.sum+B.sum,max(A.mx,B.mx),min(A.mn,B.mn));
+void Upd_path(int l,int r,ll k){
+    k%=mod;
+    while(top[l]!=top[r]){
+        if(d[top[l]]<d[top[r]]) swap(l,r);
+        S.Add(dfn[top[l]],dfn[l],k,1);
+        l=f[top[l]];
     }
-    friend Info operator+=(Info &A,const Info B){
-        A=A+B;
-        return A;
-    }
-};
-struct Seg{
-    struct S{
-        int l,r;
-        ll sum,mx,mn,laz;bool laz1;
-    };
-    #define lc (p<<1)
-    #define rc (p<<1|1)
-    vector<S>tre;
-    Seg(){};
-    Seg(int n){
-        tre.resize(n<<2);
-        build(1,n,1);
-    }
-    void pushdown(int p){
-        if(tre[p].laz!=INF) {
-            tre[lc].laz=tre[rc].laz=tre[p].laz;
-            tre[lc].laz1=tre[rc].laz1=false;
-            tre[lc].mx=tre[rc].mx=tre[p].laz;
-            tre[lc].mn=tre[rc].mn=tre[p].laz;
-            tre[lc].sum=tre[p].laz*(tre[lc].r-tre[lc].l+1);
-            tre[rc].sum=tre[p].laz*(tre[rc].r-tre[rc].l+1);
-            tre[p].laz=INF;
-        }
-        if(tre[p].laz1){
-            tre[lc].laz1^=tre[p].laz1;
-            tre[rc].laz1^=tre[p].laz1;
-
-            tre[lc].sum=-tre[lc].sum;
-            ll lasmn=tre[lc].mn,lasmx=tre[lc].mx;
-            tre[lc].mx=-lasmn;
-            tre[lc].mn=-lasmx;
-
-            tre[rc].sum=-tre[rc].sum;
-            lasmn=tre[rc].mn,lasmx=tre[rc].mx;
-            tre[rc].mx=-lasmn;
-            tre[rc].mn=-lasmx;
-            tre[p].laz1=0;
-        }
-    }
-    void pushup(int p){
-        tre[p].mx=max(tre[lc].mx,tre[rc].mx);
-        tre[p].mn=min(tre[lc].mn,tre[rc].mn);
-        tre[p].sum=tre[lc].sum+tre[rc].sum;
-    }
-    void build(int l,int r,int p){
-        tre[p]={l,r,0,-INF,INF,INF,0};
-        if(l==r){
-            tre[p].sum=b[l];
-            tre[p].mx=tre[p].mn=b[l];
-            return;
-        }
-        int mid=l+r>>1;
-        build(l,mid,lc);
-        build(mid+1,r,rc); 
-        pushup(p);
-    }
-    void Change(int l,int r,ll k,int p){
-        if(l<=tre[p].l&&r>=tre[p].r){
-            tre[p].laz1=false;
-            tre[p].laz=tre[p].mx=tre[p].mn=k;
-            tre[p].sum=k*(tre[p].r-tre[p].l+1);
-            return;
-        }
-        int mid=tre[p].l+tre[p].r>>1;
-        pushdown(p);
-        if(l<=mid) Change(l,r,k,lc);
-        if(r>mid) Change(l,r,k,rc);
-        pushup(p);
-    }//区间赋值
-    void Flip(int l,int r,int p){
-        if(l<=tre[p].l&&r>=tre[p].r){
-            tre[p].laz1^=1;
-            tre[p].sum*=-1;
-            ll lasmn=tre[p].mn,lasmx=tre[p].mx;
-            tre[p].mx=-lasmn;
-            tre[p].mn=-lasmx;
-            return;
-        }
-        int mid=tre[p].l+tre[p].r>>1;
-        pushdown(p);
-        if(l<=mid) Flip(l,r,lc);
-        if(r>mid) Flip(l,r,rc);
-        pushup(p);
-    }//区间乘-1
-    Info qry(int l,int r,int p){
-        if(l<=tre[p].l&&tre[p].r<=r){
-            return Info(tre[p].sum,tre[p].mx,tre[p].mn);
-        }
-        int mid=tre[p].l+tre[p].r>>1;
-        Info ans;
-        pushdown(p);
-        if(l<=mid) ans+=qry(l,r,lc);
-        if(r>mid) ans+=qry(l,r,rc);
-        return ans;
-    }
-}S;
-void Flip(int x,int y){
-    while(top[x]!=top[y]){
-        if(d[top[x]]<d[top[y]]) swap(x,y);
-        S.Flip(dfn[top[x]],dfn[x],1);
-        x=f[top[x]];
-    }
-    if(dfn[x]>dfn[y]) swap(x,y);
-    S.Flip(dfn[x]+1,dfn[y],1);
+    if(d[l]>d[r]) swap(l,r);
+    S.Add(dfn[l],dfn[r],k,1);
 }
-Info Qry(int x,int y){
-    Info T;
-    while(top[x]!=top[y]){
-        if(d[top[x]]<d[top[y]]) swap(x,y);
-        T+=S.qry(dfn[top[x]],dfn[x],1);
-        x=f[top[x]];
-    }
-    if(dfn[x]>dfn[y]) swap(x,y);
-    T+=S.qry(dfn[x]+1,dfn[y],1);
-    return T;
+ll qry_path(int l,int r){
+    int res=0;
+    while(top[l]!=top[r]){
+        if(d[top[l]]<d[top[r]]) swap(l,r);
+        res=(res+S.qry(dfn[top[l]],dfn[l],1))%mod;
+        l=f[top[l]];
+    }//不在同一个重链中LCA跳
+    if(d[l]>d[r]) swap(l,r);
+    res=(res+S.qry(dfn[l],dfn[r],1))%mod;
+    return res;
+}
+void Upd(int u,ll k){
+    k%=mod;
+    S.Add(dfn[u],dfn[u]+siz[u]-1,k,1);
+}
+ll qry(int u){
+    return S.qry(dfn[u],dfn[u]+siz[u]-1,1);
 }
 void solve(){
-    int n;cin>>n;
-    vector<Edge>edge;
+    cin>>n>>m>>r>>mod;
+    for(int i=1;i<=n;i++) cin>>val[i];
     for(int i=1;i<n;i++){
-        int x,y;ll w;cin>>x>>y>>w;
-        ++x,++y;
-        G[x].push_back(y);
-        G[y].push_back(x);
-        edge.push_back({x,y,w});
+        int u,v;cin>>u>>v;
+        G[u].push_back(v);
+        G[v].push_back(u);
     }
-    dfs1(1,0);    
-    vector<int>mp(n+1);//输入的第i条边权下放到哪个点？
-    for(int i=0;i<edge.size();i++){
-        auto &[x,y,w]=edge[i];
-        if(d[x]>d[y]) {
-            a[x]=w;
-            mp[i+1]=x;
+    dfs1(r,0);
+    dfs2(r,r);
+    S=Seg(n+1);
+    for(int i=1;i<=m;i++){
+        int op,l,r;ll k;cin>>op;
+        if(op==1){
+            cin>>l>>r>>k;
+            Upd_path(l,r,k);
         }
-        else {
-            a[y]=w;
-            mp[i+1]=y;
+        else if(op==2){
+            cin>>l>>r;
+            cout<<qry_path(l,r)<<endl;
         }
-    } 
-    dfs2(1,1);
-    S=Seg(n);
-    int q;cin>>q;
-    while(q--){
-        string op;cin>>op;
-        int x,y;cin>>x>>y;
-        if(op=="SUM") {
-            ++x,++y;
-            cout<<Qry(x,y).sum<<endl;
-            //询问 x,y 节点之间边权和
+        else if(op==3){
+            cin>>l>>k;
+            Upd(l,k);
         }
-        else if(op=="MAX") {
-            ++x,++y;
-            cout<<Qry(x,y).mx<<endl;
-            //询问 x,y 节点之间边权最大值
-        }
-        else if(op=="MIN"){
-            ++x,++y;
-            cout<<Qry(x,y).mn<<endl;
-            //询问 x,y 节点之间边权最小值
-        }
-        else if(op=="C"){
-            x=mp[x];
-            S.Change(dfn[x],dfn[x],y,1);
-            //将输入的第 x 条边权值改为 y
-        }
-        else if(op=="N"){
-            ++x,++y;
-            Flip(x,y);
-            //将 u,v 节点之间的边权都变为相反数
+        else if(op==4){
+            cin>>l;
+            cout<<qry(l)<<endl;
         }
     }
 }
@@ -2174,7 +2117,7 @@ bool cmp(const string &s, const string &t) {
 \end{lstlisting}
 
 \subsection{KMP}
-\begin{lstlisting}[caption={KMP},label={KMP}]
+\begin{lstlisting}[caption={KMP1},label={KMP1}]
 vector<int>Kmp(string s){
     vector<int>pi(s.size()+1);
     for(int i=1;i<s.size();i++){
@@ -2198,6 +2141,42 @@ void solve(){
     cout<<endl;
 }
 \end{lstlisting}
+
+\begin{lstlisting}[caption={KMP2},label={KMP2}]
+vector<int>border(const string &s){
+    int n=s.size();
+    vector<int>pi(n);
+    for(int i=1;i<n;i++){
+        int j=pi[i-1];
+        while(j>0&&s[j]!=s[i]) j=pi[j-1];
+        if(s[i]==s[j]) j++;
+        pi[i]=j;
+    }
+    return pi;
+}
+void kmp(const string &s,const string &t){
+    vector<int>pi=border(t);
+    int n=s.size(),m=t.size();
+    for(int i=0,j=0;i<n;i++){
+        while(j>0&&s[i]!=t[j]) j=pi[j-1];
+        if(s[i]==t[j]) j++;
+        if(j==m){
+            j=pi[j-1];
+            cout<<i-m+2<<endl;
+        }
+    }
+    for(int x:pi) cout<<x<<' ';
+    cout<<endl;
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    string s,t;
+    cin>>s>>t;
+    kmp(s,t);
+    return 0;
+}
+\end{lstlisting}
+
 \subsection{Manacher(马拉车)}
 \begin{lstlisting}[caption={马拉车求最长回文子串},label={最长回文子串}]
 int Manacher(const string& st) {
@@ -2863,6 +2842,122 @@ void solve(){
 }
 \end{lstlisting}
 
+\subsection{Pollard-Rho}
+\begin{lstlisting}[caption={Pollard-Rho}]
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using i128 = __int128;
+// ========== 快速乘（取模） ==========
+ll mul_mod(ll a, ll b, ll mod) {
+    return (ll)((i128)a * b % mod);
+}
+// ========== 快速幂取模 ==========
+ll q_pow(ll a, ll d, ll mod) {
+    ll res = 1;
+    a %= mod;
+    while (d) {
+        if (d & 1) res = mul_mod(res, a, mod);
+        a = mul_mod(a, a, mod);
+        d >>= 1;
+    }
+    return res;
+}
+// ========== Miller–Rabin 确定性判素数 ==========
+bool is_prime(ll n) {
+    if (n < 2) return false;
+    if (n == 2 || n == 3) return true;
+    if (n % 2 == 0) return false;
+    ll d = n - 1;
+    int r = 0;
+    while ((d & 1) == 0) {
+        d >>= 1;
+        ++r;
+    }
+    // 底数集合（对 2^64 以内确定性）
+    static const ll bases[] = {2, 325, 9375, 28178, 450775, 9780504, 1795265022};
+    for (ll a : bases) {
+        if (a % n == 0) continue;
+        ll x = q_pow(a, d, n);
+        if (x == 1 || x == n - 1) continue;
+        bool comp = true;
+        for (int i = 0; i < r - 1; ++i) {
+            x = mul_mod(x, x, n);
+            if (x == n - 1) {
+                comp = false;
+                break;
+            }
+        }
+        if (comp) return false;
+    }
+    return true;
+}
+// ========== 最大公约数 ==========
+// ========== Pollard–Rho 分解因子（参考你的高效写法） ==========
+// 小质数表，用于提前试除
+const vector<ll> small_primes = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
+ll pollard_rho(ll n) {
+    // 先试除小质数
+    for (ll p : small_primes) {
+        if (n % p == 0) return p;
+    }
+
+    static mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
+    uniform_int_distribution<ll> dist(1, n - 1);
+    auto f = [&](ll x) -> ll {
+        x = mul_mod(x, x, n) + 1;
+        return x >= n ? x - n : x;
+    };
+    ll x = 0, y = 0, tot = 0, p = 1, q, g;
+    for (ll i = 0; (i & 255) || (g = gcd(p, n)) == 1; ++i) {
+        x = f(x);
+        y = f(f(y));
+        if (x == y) {
+            x = ++tot;
+            y = f(x);
+        }
+        q = mul_mod(p, (x > y ? x - y : y - x), n);
+        if (q) p = q;
+    }
+    return g;
+}
+// ========== 递归分解，更新最大质因子 ==========
+ll max_factor = 0 , n;
+ll min_factor ;   // 初始化为 n
+void factorize_mx(ll n) {
+    if (n <= max_factor || n < 2) return;
+    if (is_prime(n)) {
+        max_factor = max(max_factor, n);
+        return;
+    }
+    ll d = pollard_rho(n);
+    factorize_mx(d);
+    factorize_mx(n / d);
+}
+void factorize_mn(ll n) {
+    if (n <= 1) return;
+    if (is_prime(n)) {
+        min_factor = min(min_factor, n);
+        return;
+    }
+    ll d = pollard_rho(n);
+    factorize_mn(d);
+    factorize_mn(n / d);
+}
+int main() {
+    cin.tie(nullptr)->ios::sync_with_stdio(false);
+    int T;cin >> T;
+    while (T--) {
+        cin >> n;  
+        max_factor = 0,min_factor = n;
+        factorize_mx(n);
+        if (max_factor == n) cout << "Prime\n";
+        else cout << max_factor << '\n';
+    }
+    return 0;
+}
+\end{lstlisting}
+
 \subsection{线性基}
 \begin{lstlisting}[caption={线性基},label={线性基}]
 struct LB{
@@ -3105,7 +3200,64 @@ void solve(){
 }
 \end{lstlisting}
 
-
+\section{计算几何}
+\subsection{极角排序}
+\begin{lstlisting}[caption={极角排序求夹角最近两向量}]
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+typedef long long ll;
+typedef long double ld;
+const ll INF=1e18;
+const ld pi=acos(-1);
+struct Point{
+    ll x,y;
+    int id,idx;
+    Point(ll x,ll y,int idx):x(x),y(y),idx(idx){
+        if(x>=0&&y>=0) id=1;
+        else if(x>=0&&y<0) id=2;
+        else if(x<0&&y<0) id=3;
+        else id=4; 
+    };
+    Point(){};
+    friend bool operator<(Point A,Point B){
+        if(A.id!=B.id) return A.id<B.id;
+        return A.x*B.y-A.y*B.x<0; 
+    }//极角排序
+};
+void solve(){
+    int n;cin>>n;
+    vector<Point>a(n+2);
+    for(int i=1;i<=n;i++) {
+        ll x,y;
+        cin>>x>>y;
+        a[i]=Point(x,y,i);
+    }
+    sort(a.begin()+1,a.begin()+1+n);
+    ll x=0,y=0;
+    auto calc=[&](Point &A,Point &B) ->ld {
+        ld cross=A.x*B.y-A.y*B.x;
+        ld dot=A.x*B.x+A.y*B.y;
+        return fabsl(atan2l(cross,dot));
+    };//较小精度损失的计算角度
+    ++n;
+    a[n]=a[1];//让 n和1比一次
+    ld mn=INF;
+    for(int i=1;i<n;i++){
+        ld res=calc(a[i],a[i+1]);
+        if(res<mn){
+            x=a[i].idx,y=a[i+1].idx;
+            mn=res;
+        }
+    }
+    cout<<x<<' '<<y<<endl;
+}
+int main(){
+    cin.tie(0)->ios::sync_with_stdio(false);
+    solve();
+    return 0;
+}
+\end{lstlisting}
 \newpage
 \section{Other Trick}
 
@@ -3395,6 +3547,7 @@ void solve() {
 }
 \end{lstlisting}
 
+
 \subsection{Log Trick}
 前缀 GCD ,OR , AND 等操作变化的级别是呈现对数级别的.
 \section*{问题简述(Hdu 5869)}
@@ -3531,5 +3684,18 @@ int main() {
     return 0;
 }
 \end{lstlisting}
+
+\subsection{异或前缀模4小规律}
+
+设 $S(n) = 1 \oplus 2 \oplus 3 \oplus \cdots \oplus n$，则有：
+\[
+S(n) =
+\begin{cases}
+n,      & n \bmod 4 = 0 \\
+1,      & n \bmod 4 = 1 \\
+n+1,    & n \bmod 4 = 2 \\
+0,      & n \bmod 4 = 3
+\end{cases}
+\]
 
 \end{document}
