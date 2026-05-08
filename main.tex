@@ -61,7 +61,10 @@
     \vspace{1.5cm}              % 减小标题与作者之间的间距
     
     {\Large usedchang} \par     % 作者名
-    \vspace{1cm}                % 减小作者与日期之间的间距
+    \vspace{0.5cm}               % 减小作者与头像之间的间距
+    
+    \includegraphics[width=4.5cm]{avatar-usedchang.png} \par  % 头像
+    \vspace{0.5cm}               % 减小头像与日期之间的间距
     
     {\Large \today} \par        % 日期
     
@@ -2509,6 +2512,97 @@ int main(){
 }
 \end{lstlisting}
 
+\subsection{树上背包}
+
+\textbf{25上海市赛I}
+
+\section*{题目大意}
+给定一棵以 $1$ 为根的有根树，每个节点上的人要么是“诚实者”（恒说真话），要么是“说谎者”（恒说假话）。每个节点 $i$ 的人声称：“以我为根的子树中，恰好有 $a_i$ 个诚实者。”
+求所有满足以下逻辑自洽条件的身份分配方案数：
+\begin{itemize}
+    \item 若节点 $i$ 是诚实者，则其子树中诚实者的实际数量必须等于 $a_i$；
+    \item 若节点 $i$ 是说谎者，则其子树中诚实者的实际数量必须不等于 $a_i$。
+\end{itemize}
+
+\begin{itemize}
+    \item 第一行：一个整数 $T$（$1 \le T \le 5000$），表示数据组数。
+    \item 每组数据第一行：一个正整数 $n$（$1 \le n \le 5000$，$\sum n \le 5000$），表示节点数量。
+    \item 每组数据第二行：$n$ 个非负整数 $a_1, a_2, \dots, a_n$（$0 \le a_i \le n$），表示每个节点的陈述。
+    \item 接下来 $n-1$ 行：每行两个正整数 $u_i, v_i$（$1 \le u_i, v_i \le n$），表示树的一条边，保证输入构成一棵以 $1$ 为根的有根树。
+\end{itemize}
+
+\section*{输出格式}
+对每组数据输出一行一个整数，表示满足条件的真假分配情况数量，答案对 $998244353$ 取模。
+
+
+\section*{简要分析}
+采用树形背包 DP 求解，通过后序遍历合并子树状态，根据节点身份（诚实/说谎）约束转移，统计合法方案数。
+
+\section*{状态定义}
+\begin{itemize}
+    \item $f[u][j]$：仅用节点 $u$ 的子树，产生 $j$ 个诚实者的合法方案数（不包含 $u$ 自身）；
+    \item $dp[u][j]$：用节点 $u$ 的子树 + $u$ 自身，产生 $j$ 个诚实者的合法方案数；
+    \item $siz[u]$：以 $u$ 为根的子树大小。
+\end{itemize}
+
+\section*{状态转移}
+1. 初始化：$f[u][0] = 1$，$siz[u] = 1$；
+2. 子树合并：遍历子节点 $v$，用**树形背包**倒序枚举合并状态：
+   $$nxt[j+k] += f[u][j] \times dp[v][k] \pmod{mod}$$
+   用 $nxt$ 更新 $f[u]$，并更新子树大小；
+3. 身份转移：
+   - 说谎者：$dp[u][j] = f[u][j] \ (j \neq a[u])$；
+   - 诚实者：$dp[u][a[u]] = f[u][a[u]-1] \ (a[u] \ge 1)$。
+
+\section*{复杂度分析}
+代码虽为三重循环，本质是树形背包均摊复杂度：
+任意两个节点仅在其最近公共祖先处被枚举一次，总操作数等于子树大小乘积和，**严格为 $O(n^2)$**；
+结合题目约束 $\sum n \le 5000$，总计算量不超过 $2.5 \times 10^7$，可轻松通过。
+
+\section*{答案统计}
+最终答案为根节点 $1$ 的所有合法状态之和：$\sum\limits_{i=0}^{siz[1]} dp[1][i] \pmod{998244353}$。
+\begin{lstlisting}[caption={树上背包}]
+const ll mod=998244353;
+void solve(){
+    int n;cin>>n;
+    vector<int>a(n+1);
+    vector< vector<int> >G(n+1);
+    for(int i=1;i<=n;i++) cin>>a[i];
+    for(int i=1;i<n;i++){
+        int x,y;cin>>x>>y;
+        G[x].emplace_back(y);
+        G[y].emplace_back(x);
+    }
+    vector<vector<ll>>dp(n+1,vector<ll>(n+1));//使用子树和当前点产生j个诚实者的合法情况
+    vector<vector<ll>>f(n+1,vector<ll>(n+1));//仅使用子树产生j个诚实者的合法情况
+    vector<int>siz(n+1);
+    auto dfs=[&](auto &&dfs,int u,int fa) ->void {
+        f[u][0]=siz[u]=1;
+        for(int v:G[u]){
+            if(v==fa) continue;
+            dfs(dfs,v,u);
+            vector<ll>nxt(siz[u]+siz[v]+1);
+            for(int j=siz[u];j>=0;j--){
+                for(int k=siz[v];k>=0;k--){
+                    (nxt[j+k]+=(f[u][j]*dp[v][k]%mod))%=mod;
+                }
+            }
+            f[u]=move(nxt);
+            siz[u]+=siz[v];
+        }
+        for(int j=siz[u];j>=0;j--) dp[u][j]=f[u][j];
+        dp[u][a[u]]=0;
+        if(a[u]>=1&&a[u]<=siz[u]) {
+            dp[u][a[u]]=f[u][a[u]-1];
+        }
+    };
+    dfs(dfs,1,0);
+    ll ans=0;
+    for(int i=0;i<=siz[1];i++) (ans+=dp[1][i])%=mod;
+    cout<<ans<<endl;
+}
+\end{lstlisting}
+
 \subsection{换根dp}
 \begin{lstlisting}[caption={换根dp},label={换根dp}]
 #include<bits/stdc++.h>
@@ -2553,6 +2647,7 @@ int main(){
     return 0;
 }
 \end{lstlisting}
+
 
 \subsection{区间dp}
 \begin{lstlisting}[caption={区间dp典},label={区间dp}]
