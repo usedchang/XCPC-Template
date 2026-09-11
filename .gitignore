@@ -15,6 +15,7 @@
 *.vrb
 *.dvi
 *.ps
+*.xdv
 # 编辑器临时文件
 *.swp
 *.swo
@@ -24,3 +25,7 @@ Thumbs.db
 # VSCode / TeXStudio 缓存
 .vscode/
 __latexindent_temp*
+# 本地工具配置与插件缓存
+.cph/
+.reasonix/
+reasonix.toml

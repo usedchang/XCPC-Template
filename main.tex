@@ -6,6 +6,7 @@
 \usepackage{amsmath, amssymb, amsthm}  % 数学公式
 \usepackage{algorithm}                 % 算法环境
 \usepackage{algpseudocode}             % 伪代码
+\usepackage{newunicodechar}           % 让代码里的 ∈ 等符号有字形
 \usepackage{listings}                  % 代码高亮
 \usepackage{xcolor}                    % 颜色
 \usepackage{graphicx}                  % 插图（可选）
@@ -26,31 +27,67 @@
 % ==================== 代码高亮设置（已彻底修复空格方格）====================
 \lstset{
     language=C++,
-    basicstyle=\ttfamily\scriptsize,  % 使用更小的字体以适应双栏
-    keywordstyle=\color{blue}\bfseries,
-    commentstyle=\color{green!60!black},
-    stringstyle=\color{red},
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color[HTML]{005CC5}\bfseries,
+    commentstyle=\color[HTML]{6A737D}\itshape,
+    stringstyle=\color[HTML]{032F62},
     numbers=left,
-    numberstyle=\tiny\color{gray},
+    numberstyle=\tiny\color[HTML]{B8BFC7},
+    numbersep=7pt,
     breaklines=true,
-    frame=single,
-    backgroundcolor=\color{gray!10},
+    breakatwhitespace=true,
+    backgroundcolor=\color[HTML]{F6F8FA},
     showstringspaces=false,
     upquote=true,
     keepspaces=true,
     columns=fullflexible,
     tabsize=2,
-    xleftmargin=0.5em,  % 减小代码块左边距
-    framexleftmargin=0.5em,  % 减小框架左边距
-    aboveskip=2pt,  % 减小代码块上方间距
-    belowskip=2pt,  % 减小代码块下方间距
-    breakindent=0.5em  % 换行缩进
+    xleftmargin=0.5em,
+    framexleftmargin=0.5em,
+    xrightmargin=0.8em,
+    aboveskip=2pt,
+    belowskip=2pt,
+    breakindent=0em,
+    literate=
+        {<}{\texttt{<}}1
+        {>}{\texttt{>}}1
+        {<<}{\texttt{<<}}2
+        {>>}{\texttt{>>}}2
+        {<=}{\texttt{<=}}2
+        {>=}{\texttt{>=}}2
+        {->}{\texttt{->}}2
+        {!=}{\texttt{!=}}2
+        {==}{\texttt{==}}2
+        {+=}{\texttt{+=}}2
+        {-=}{\texttt{-=}}2
+        {*=}{\texttt{*=}}2
+        {/=}{\texttt{/=}}2
+        {\%}{\texttt{\%}}1
+        {\\n}{\texttt{$\setminus$n}}2
+        {\\t}{\texttt{$\setminus$t}}2
+        {\\r}{\texttt{$\setminus$r}}2
+        {\\0}{\texttt{$\setminus$0}}2
+        {\#}{\texttt{\#}}1
+        {\&}{\texttt{\&}}1
+        {@}{\texttt{@}}1,
+    escapeinside={(*@}{@*)},
+    alsoletter={@},
+    sensitive=false,
+    morecomment=[l][commentstyle]{//},
+    morecomment=[s][commentstyle]{/*}{*/},
+    keepspaces=true,
+    showtabs=false,
+    extendedchars=true,
+    inputencoding=utf8
 }
+% 代码默认等宽字体（Latin Modern Mono）没有 ∈(U+2208)；映射到数学 \in，
+% 这样无需更换代码字体即可正确显示。
+\newunicodechar{∈}{\ensuremath{\in}}
 
-% 自定义定理环境
-\newtheorem{theorem}{定理}[section]
-\newtheorem{lemma}[theorem]{引理}
 \newtheorem{example}{例}
+
+\usepackage{hyperref}
+\hypersetup{hidelinks, bookmarksnumbered=true, bookmarksopen=true}
 
 \begin{document}
 \begin{titlepage}
@@ -75,10 +112,13 @@
 \vspace{5pt}  % 减小目录后的空白
 
 % 以下内容保持不变...
+% 双栏模式下 \newpage 只结束"当前栏"，要结束整页必须用 \clearpage；
+% 而 LaTeX 会丢弃零内容的页面，所以空白页中间必须放一个 \null 撑住。
+\clearpage                  % 结束目录页
+\thispagestyle{empty}       % 空白页不显示页码
+\null                       % 关键：给空白页一个"内容"，否则该页会被丢弃
+\clearpage                  % 空白页结束，正文从新的一页开始
 
-
-
-\vspace{10cm}
 \section{杂项}
 \subsection{IO加速}
 \lstinputlisting[caption={快速读入模板}, label={fast-io}]{cpp_templates/杂项/fast-io.cpp}
@@ -94,7 +134,7 @@
 \subsection{热身赛测试语句}
 \lstinputlisting{cpp_templates/杂项/测试语句.cpp}
 
-\lstinputlisting[caption={随机数}]{cpp_templates/杂项/随机数.cpp}
+\lstinputlisting[caption={随机数}, breakatwhitespace=false]{cpp_templates/杂项/随机数.cpp}
 
 \subsection{编译指令}
 \lstinputlisting[caption={编译指令}]{cpp_templates/杂项/编译指令.cpp}
@@ -111,7 +151,7 @@
 \section{数据结构}
 
 \subsection{ST表}
-\lstinputlisting[caption={ST表}, label={lst:ST表}]{cpp_templates/数据结构/ST表.cpp}
+\lstinputlisting[caption={ST表}, label={lst:ST表}, breakatwhitespace=false]{cpp_templates/数据结构/ST表.cpp}
 \subsection{并查集}
 \lstinputlisting[caption={普通并查集}, label={lst:dsu-basic}]{cpp_templates/数据结构/dsu-basic.cpp}
 
@@ -135,7 +175,7 @@
 
 \subsection{平衡树}
 
-\lstinputlisting[caption={FHQ-Treap}, label={lst:FHQ-Treap}]{cpp_templates/数据结构/FHQ-Treap.cpp}
+\lstinputlisting[caption={FHQ-Treap}, label={lst:FHQ-Treap}, breakatwhitespace=false]{cpp_templates/数据结构/FHQ-Treap.cpp}
 
 
 \subsection{根号分治}
@@ -170,7 +210,10 @@ $$
 \section*{预处理阶段（离线预处理高频值对）}
 对于任意两个高频值 $u, v \in H$，预计算数对 $(u,v)$ 的答案并存储在哈希表 $mp$ 中：
 $$
-mp[(u,v)] = \sum_{p \in pos[u]} \left( |pos[v]| - \text{upper\_bound}(pos[v], p) \right)
+\begin{aligned}
+mp[(u,v)] &= \sum_{p \in pos[u]} \Bigl( |pos[v]| \\
+           &\qquad - \text{upper\_bound}(pos[v], p) \Bigr)
+\end{aligned}
 $$
 预处理时间复杂度：$O(|H|^2 \cdot B)$，由于 $|H| \le \frac{n}{B}$，故总复杂度为 $O(nB)$。
 
@@ -191,7 +234,7 @@ $$
 预处理复杂度：$O(n\sqrt{n})$；
 单次查询复杂度：$O(\sqrt{n})$，总查询复杂度：$O(q\sqrt{n})$；
 整体时间复杂度：$O((n+q)\sqrt{n})$，可通过 $10^5$ 规模的数据。
-\lstinputlisting[caption={根号分治}, label={lst:根号分治}]{cpp_templates/数据结构/根号分治.cpp}
+\lstinputlisting[caption={根号分治}, label={lst:根号分治}, breakatwhitespace=false]{cpp_templates/数据结构/根号分治.cpp}
 
 
 \subsubsection{无向图三元环计数}
@@ -228,7 +271,10 @@ $$
 
 算法的核心操作量为：
 \[
-    T = \sum_{(u \to v) \in E'} d^+(v) \le \sum_{(u \to v) \in E'} \sqrt{2m} = |E'| \cdot \sqrt{2m} = m\sqrt{2m}
+\begin{aligned}
+    T &= \sum_{(u \to v) \in E'} d^+(v) \le \sum_{(u \to v) \in E'} \sqrt{2m} \\
+      &= |E'| \cdot \sqrt{2m} = m\sqrt{2m}
+\end{aligned}
 \]
 
 因此总时间复杂度为 $O(m\sqrt{m})$。
@@ -236,7 +282,7 @@ $$
 对于本题 $m = 2 \times 10^5$，操作量约为 $2 \times 10^5 \times 632 \approx 1.26 \times 10^8$，可以通过。空间复杂度为 $O(n + m)$。
 \lstinputlisting[caption={根号分治求三元环计数}]{cpp_templates/数据结构/根号分治求三元环计数.cpp}
 \subsection{莫队}
-\lstinputlisting[caption={普通莫队算法}, label={lst:mo-algo}]{cpp_templates/数据结构/mo-algo.cpp}
+\lstinputlisting[caption={普通莫队算法}, label={lst:mo-algo}, breakatwhitespace=false]{cpp_templates/数据结构/mo-algo.cpp}
 
 \section{树}
 \subsection{LCA}
@@ -250,7 +296,7 @@ $$
 
 \lstinputlisting[caption={树形dp求直径}, label={lst:树形dp求直径}]{cpp_templates/树/树形dp求直径.cpp}
 \subsection{树链剖分}
-\lstinputlisting[caption={树链剖分}, label={lst:树链剖分}]{cpp_templates/树/树链剖分.cpp}
+\lstinputlisting[caption={树链剖分}, label={lst:树链剖分}, breakatwhitespace=false]{cpp_templates/树/树链剖分.cpp}
 \subsection{树上启发式合并}
 \section*{题面简述}
 
@@ -320,6 +366,8 @@ $$
 \subsection{最小生成树}
 \lstinputlisting[caption={Kruskal求最小生成树}, label={Kruskal}]{cpp_templates/图论/Kruskal.cpp}
 
+\lstinputlisting[caption={Prim求最小生成树(小根堆优化)}, label={lst:Prim}]{cpp_templates/图论/Prim.cpp}
+
 \subsection{Kruskal重构树}
 Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
 \lstinputlisting[caption={Kruskal重构树}, label={lst:Kruskal重构树}]{cpp_templates/图论/Kruskal重构树.cpp}
@@ -335,6 +383,8 @@ Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
 \lstinputlisting[caption={二分图染色}, label={二分图染色}]{cpp_templates/图论/二分图染色.cpp}
 \subsubsection{二分图最大权匹配}
 \lstinputlisting[caption={二分图最大匹配}, label={二分图最大匹配}]{cpp_templates/图论/二分图最大匹配.cpp}
+\subsubsection{二分图最大匹配(Dinic)}
+\lstinputlisting[caption={Dinic求二分图最大匹配}, label={lst:dinic二分图最大匹配}]{cpp_templates/图论/dinic-二分图最大匹配.cpp}
 \subsection{差分约束}
 
 给定 \(n\) 个变量 \(x_1, x_2, \dots, x_n\) 与 \(m\) 个差分约束 \(x_c - x_{c'} \leq y\)。
@@ -347,6 +397,8 @@ Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
 \lstinputlisting[caption={SCC}, label={SCC}]{cpp_templates/图论/SCC.cpp}
 \subsubsection{DECC(边双联通分量)}
 \lstinputlisting[caption={DECC}, label={DECC}]{cpp_templates/图论/DECC.cpp}
+\subsection{two-sat}
+\lstinputlisting[caption={two-sat}, label={two-sat}]{cpp_templates/图论/two-sat.cpp}
 \newpage
 \section{字符串}
 \subsection{字符串哈希}
@@ -357,8 +409,15 @@ Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
 
 \lstinputlisting[caption={KMP2}, label={KMP2}]{cpp_templates/字符串/KMP2.cpp}
 
+\subsection{Z函数(扩展KMP)}
+\lstinputlisting[caption={Z函数}, label={lst:Z函数}]{cpp_templates/字符串/Z函数.cpp}
+
 \subsection{Manacher(马拉车)}
 \lstinputlisting[caption={马拉车求最长回文子串}, label={最长回文子串}]{cpp_templates/字符串/最长回文子串.cpp}
+
+\subsection{回文自动机(PAM)}
+维护每个前缀的本质不同回文子串个数，可统计每个回文串的出现次数。
+\lstinputlisting[caption={PAM(回文自动机)}, label={lst:PAM}]{cpp_templates/字符串/PAM.cpp}
 \newpage
 \section{动态规划}
 
@@ -422,10 +481,10 @@ Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
 
 \section*{答案统计}
 最终答案为根节点 $1$ 的所有合法状态之和：$\sum\limits_{i=0}^{siz[1]} dp[1][i] \pmod{998244353}$。
-\lstinputlisting[caption={树上背包}]{cpp_templates/动态规划/树上背包.cpp}
+\lstinputlisting[caption={树上背包}, breakatwhitespace=false]{cpp_templates/动态规划/树上背包.cpp}
 
 \subsection{换根dp}
-\lstinputlisting[caption={换根dp}, label={换根dp}]{cpp_templates/动态规划/换根dp.cpp}
+\lstinputlisting[caption={换根dp}, label={换根dp}, breakatwhitespace=false]{cpp_templates/动态规划/换根dp.cpp}
 
 
 \subsection{区间dp}
@@ -444,7 +503,7 @@ Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
     \item $1 \leq C_i \leq 10000$
     \item 所有输入均为整数
 \end{itemize}
-\lstinputlisting[caption={SOSdp解决数位不发生进位问题}]{cpp_templates/动态规划/SOSdp解决数位不发生进位问题.cpp}
+\lstinputlisting[caption={SOSdp解决数位不发生进位问题}, breakatwhitespace=false]{cpp_templates/动态规划/SOSdp解决数位不发生进位问题.cpp}
 \subsection{数位dp}
 \lstinputlisting[caption={统计a-b中各个数位出现个数}]{cpp_templates/动态规划/统计a-b中各个数位出现个数.cpp}
 \newpage
@@ -469,7 +528,7 @@ Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
 
 第二类斯特林数（斯特林子集数）\(\begin{Bmatrix}n\\ k\end{Bmatrix}\)，也可记做 \(S(n,k)\)，表示将 \(n\) 个两两不同的元素划分为 \(k\) 个互不区分的非空子集的方案数。
 
-\lstinputlisting[caption={Stirling 数}, label={lst:Stirling 数}, basicstyle=\ttfamily]{cpp_templates/数学/Stirling 数.cpp}
+\lstinputlisting[caption={Stirling 数}, label={lst:Stirling 数}]{cpp_templates/数学/Stirling 数.cpp}
 
 \newpage
 \subsection{卡特兰数}
@@ -495,8 +554,15 @@ C_n = \frac{4n-2}{n+1}C_{n-1},\quad n>0,\ C_0=1. \tag{4}
 \subsection{FFT}
 \lstinputlisting[caption={FFT解决区间和是质数的数的区间个数}]{cpp_templates/数学/FFT解决区间和是质数的数的区间个数.cpp}
 
+\subsection{NTT}
+\lstinputlisting[caption={NTT多项式乘法(模998244353)}, label={lst:ntt}]{cpp_templates/数学/ntt.cpp}
+
+\subsection{线性递推(Berlekamp-Massey)}
+用前若干项求出最短线性递推式，再用 $O(k^2\log n)$ 的快速幂求第 $n$ 项（如 Fibonacci 取 $n$ 很大时）。
+\lstinputlisting[caption={Berlekamp-Massey + 线性递推}, label={lst:BM线性递推}]{cpp_templates/数学/KM算法.cpp}
+
 \subsection{Pollard-Rho}
-\lstinputlisting[caption={Pollard-Rho}]{cpp_templates/数学/Pollard-Rho.cpp}
+\lstinputlisting[caption={Pollard-Rho}, breakatwhitespace=false]{cpp_templates/数学/Pollard-Rho.cpp}
 
 \subsection{异或线性基}
 \lstinputlisting[caption={异或线性基}, label={异或线性基}]{cpp_templates/数学/异或线性基.cpp}
@@ -617,10 +683,32 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
 
 总操作量约 $6 \times 10^7$，可以通过。空间复杂度为 $O(n)$。
 \lstinputlisting[caption={莫比乌斯反演}, label={莫比乌斯反演}]{cpp_templates/数学/莫比乌斯反演.cpp}
+
 \subsection{exgcd}
 \lstinputlisting[caption={exgcd}]{cpp_templates/数学/exgcd.cpp}
 
+\subsection{exBSGS}
+\lstinputlisting[caption={exBSGS}]{cpp_templates/数学/exBSGS.cpp}
+
 \section{计算几何}
+\subsection{基础定义}
+\lstinputlisting[caption={基础计算几何(精度与符号函数)}, label={lst:geo-basic}]{cpp_templates/计算几何/基础计算几何.cpp}
+\subsection{点与向量}
+\lstinputlisting[caption={二维点(Point 2D)}, label={lst:geo-point2d}]{cpp_templates/计算几何/2D-point.cpp}
+
+\lstinputlisting[caption={三维点(Point 3D)}, label={lst:geo-point3d}]{cpp_templates/计算几何/3D-point.cpp}
+\subsection{直线}
+\lstinputlisting[caption={直线常用操作}, label={lst:geo-line}]{cpp_templates/计算几何/Line.cpp}
+\subsection{线段}
+\lstinputlisting[caption={线段常用操作}, label={lst:geo-segment}]{cpp_templates/计算几何/Segment.cpp}
+\subsection{三角形}
+\lstinputlisting[caption={三角形五心与面积}, label={lst:geo-triangle}]{cpp_templates/计算几何/Triangle.cpp}
+\subsection{圆}
+\lstinputlisting[caption={圆常用操作与最小覆盖圆}, label={lst:geo-circle}, breakatwhitespace=false]{cpp_templates/计算几何/Circle.cpp}
+\subsection{多边形}
+\lstinputlisting[caption={多边形面积/重心/点在多边形内}, label={lst:geo-polygon}]{cpp_templates/计算几何/Polygon.cpp}
+\subsection{球}
+\lstinputlisting[caption={三维球与三维最小覆盖球}, label={lst:geo-sphere}, breakatwhitespace=false]{cpp_templates/计算几何/Sphere.cpp}
 \subsection{极角排序}
 \lstinputlisting[caption={极角排序求夹角最近两向量}]{cpp_templates/计算几何/极角排序求夹角最近两向量.cpp}
 \newpage
@@ -806,6 +894,22 @@ n+1,    & n \bmod 4 = 2 \\
 \end{cases}
 \]
 
+\subsection{高阶差分下等差求通项}
+给定：
+\begin{itemize}
+\item 阶数 \(k\)
+\item 第 \(k\) 阶差分为常数 \(d\)（即“k阶公差”为 \(d\)，同时“第k阶差分初值”也为 \(d\)）
+\end{itemize}
+则原数列的第 \(n\) 项为：
+
+\[
+\boxed{
+a_n = d \cdot \binom{n+k-1}{k}
+}
+\]
+
+
+
 \subsection{曼哈顿距离与切比雪夫距离的相互转化}
 
 \section*{曼哈顿距离转切比雪夫距离}
@@ -888,7 +992,10 @@ H([L,R])=\sum_{i=L}^{R} B^{a_i}
 \]
 区间整体加上 $k$ 后：
 \[
-H'([L,R])=\sum_{i=L}^{R} B^{a_i+k}=B^k\cdot\sum_{i=L}^{R} B^{a_i}=B^k\cdot H([L,R])
+\begin{aligned}
+H'([L,R]) &= \sum_{i=L}^{R} B^{a_i+k} = B^k\cdot\sum_{i=L}^{R} B^{a_i} \\
+          &= B^k\cdot H([L,R])
+\end{aligned}
 \]
 因此只需判断 $B^k\cdot H([L_1,R_1])$ 与 $H([L_2,R_2])$ 的关系即可。
 

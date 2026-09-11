@@ -76,13 +76,16 @@ void solve(){
     }
     while(!Q.empty()){
         int u=Q.front();
+        if(Q.size()>1){
+            cout<<"No"<<endl;
+            return;
+        }
         Q.pop();
         for(int v:new_G[u]){
             if((--in[v])==0){
-                dp[v]=max(dp[v],dp[u]+new_w[v]);
                 Q.push(v);
             }
         }
     }
-    cout<<*max_element(dp.begin(),dp.end())<<endl;
+    cout<<"Yes"<<endl;
 }

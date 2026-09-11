@@ -30,7 +30,7 @@ int main(){
         dp[a[i]]++;
     } 
     int p=1;
-    for(int i=1;i<=6;i++){//本质是对每个十进制数位进行一次强缀和,又称高维前缀和(SOS dp)
+    for(int i=1;i<=6;i++){//本质是对每个十进制数位进行一次前缀和,又称高维前缀和(SOS dp)
         for(int j=0;j<N;j++){
             if((j/p)%10) dp[j]+=dp[j-p];
         }

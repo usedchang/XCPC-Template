@@ -23,7 +23,7 @@ int main(){
     }
     ll ans=0;
     for(int i=1;i<=n;i++) {
-        fill(vis+1,vis+1+n,false);
+        fill(vis+1,vis+1+m,false);
         ans+=dfs(i);
     }
     cout<<ans<<endl;
