@@ -1,16 +1,12 @@
 \documentclass[11pt,a4paper,twocolumn]{ctexart}  % 中文支持 + 文章格式 + 双栏布局
-\usepackage[utf8]{inputenc}
 \usepackage{geometry}
 \geometry{a4paper, left=2cm, right=2cm, top=2cm, bottom=2.5cm}  % 调整页边距以适应双栏
 \setlength{\columnsep}{1cm}  % 设置左右栏之间的间距
 \usepackage{amsmath, amssymb, amsthm}  % 数学公式
-\usepackage{algorithm}                 % 算法环境
-\usepackage{algpseudocode}             % 伪代码
 \usepackage{newunicodechar}           % 让代码里的 ∈ 等符号有字形
 \usepackage{listings}                  % 代码高亮
 \usepackage{xcolor}                    % 颜色
 \usepackage{graphicx}                  % 插图（可选）
-\usepackage{tocloft}                   % 目录美化
 \usepackage{fancyhdr}    % 引入页眉页脚控制宏包
 
 \pagestyle{fancy}       % 启用自定义样式
@@ -75,16 +71,13 @@
     sensitive=false,
     morecomment=[l][commentstyle]{//},
     morecomment=[s][commentstyle]{/*}{*/},
-    keepspaces=true,
     showtabs=false,
-    extendedchars=true,
-    inputencoding=utf8
+    extendedchars=true
 }
 % 代码默认等宽字体（Latin Modern Mono）没有 ∈(U+2208)；映射到数学 \in，
 % 这样无需更换代码字体即可正确显示。
 \newunicodechar{∈}{\ensuremath{\in}}
 
-\newtheorem{example}{例}
 
 \usepackage{hyperref}
 \hypersetup{hidelinks, bookmarksnumbered=true, bookmarksopen=true}
@@ -114,6 +107,8 @@
 % 以下内容保持不变...
 % 双栏模式下 \newpage 只结束"当前栏"，要结束整页必须用 \clearpage；
 % 而 LaTeX 会丢弃零内容的页面，所以空白页中间必须放一个 \null 撑住。
+% 因此：大节（\section）之间一律用 \clearpage 换页；只有节内想把某个代码块
+% 挪到下一栏时才用 \newpage（如并查集、矩阵快速幂、卡特兰数三处）。
 \clearpage                  % 结束目录页
 \thispagestyle{empty}       % 空白页不显示页码
 \null                       % 关键：给空白页一个"内容"，否则该页会被丢弃
@@ -121,13 +116,13 @@
 
 \section{杂项}
 \subsection{IO加速}
-\lstinputlisting[caption={快速读入模板}, label={fast-io}]{cpp_templates/杂项/fast-io.cpp}
+\lstinputlisting[caption={快速读入模板}]{cpp_templates/杂项/fast-io.cpp}
 
 \subsection{\_\_int128操作}
 \lstinputlisting{cpp_templates/杂项/__int128操作.cpp}
 
 \subsection{对拍}
-\lstinputlisting[caption={对拍windows}, label={对拍}]{cpp_templates/杂项/对拍.cpp}
+\lstinputlisting[caption={对拍windows}]{cpp_templates/杂项/对拍.cpp}
 
 \lstinputlisting[caption={对拍linux}]{cpp_templates/杂项/对拍linux.cpp}
 
@@ -137,45 +132,114 @@
 \lstinputlisting[caption={随机数}, breakatwhitespace=false]{cpp_templates/杂项/随机数.cpp}
 
 \subsection{编译指令}
+常用选项：\texttt{-Wall} / \texttt{-Wextra} 打开警告，\texttt{-O2} 二级优化（竞赛最常用），
+\texttt{-o a.exe} 指定输出文件名（Linux 下写 \texttt{-o a}）；末尾的
+\texttt{\&\& a.exe} 表示编译成功就立刻运行。
 \lstinputlisting[caption={编译指令}]{cpp_templates/杂项/编译指令.cpp}
 
 \lstinputlisting[caption={.bat/.cmd (win)批处理文件编译}]{cpp_templates/杂项/(win)批处理文件编译.cpp}
 
 \lstinputlisting[caption={.sh (linux)文件编译}]{cpp_templates/杂项/.sh (linux)文件编译.cpp}
 
+\subsection{pbds：平衡树(名次树)}
+pbds 的 \texttt{tree}：\texttt{order\_of\_key} 查排名、\texttt{find\_by\_order} 查第 $k$ 小，
+还有 \texttt{lower\_bound} / \texttt{upper\_bound}，比手写平衡树省事。
+可重集合（multiset）把键换成 \texttt{pair<值, 唯一编号>} 保证键唯一，此时
+"值 $\le x$ 的个数"用 \texttt{order\_of\_key(\{x, 无穷大\})}，
+"值 $\ge x$ 的个数"用 \texttt{size()} 减去 \texttt{order\_of\_key(\{x, 0\})}。
+头文件 \texttt{<ext/pb\_ds/assoc\_container.hpp>} 与 \texttt{<ext/pb\_ds/tree\_policy.hpp>}。
+\lstinputlisting[caption={pbds 平衡树(名次树)}, breakatwhitespace=false]{cpp_templates/杂项/pbds平衡树.cpp}
+
+\subsection{pbds：哈希表}
+\texttt{gp\_hash\_table}（探测法）/ \texttt{cc\_hash\_table}（拉链法），比 \texttt{unordered\_map} 快，
+还能塞自定义哈希防被卡。头文件 \texttt{<ext/pb\_ds/assoc\_container.hpp>} 与 \texttt{<ext/pb\_ds/hash\_policy.hpp>}。
+\lstinputlisting[caption={pbds 哈希表}, breakatwhitespace=false]{cpp_templates/杂项/pbds哈希表.cpp}
+
+\subsection{pbds：堆(可并堆、可修改)}
+\texttt{priority\_queue} 的配对堆版本：支持 \texttt{join} 合并两个堆、按句柄 \texttt{erase} / \texttt{modify}。
+头文件 \texttt{<ext/pb\_ds/priority\_queue.hpp>}；名字与 \texttt{std::priority\_queue} 撞车，要写全命名空间。
+\lstinputlisting[caption={pbds 堆(可并堆/可修改)}, breakatwhitespace=false]{cpp_templates/杂项/pbds堆.cpp}
+
+\subsection{rope：块状链表}
+GNU 扩展 \texttt{rope}：$O(\log n)$ 插入、删除、区间提取与拼接，赋值是 $O(1)$ 的写时复制，
+所以也能当可持久化序列用。头文件 \texttt{<ext/rope>}，命名空间是 \texttt{\_\_gnu\_cxx}（不是 \texttt{\_\_gnu\_pbds}）。
+\lstinputlisting[caption={rope 块状链表}, breakatwhitespace=false]{cpp_templates/杂项/rope块状链表.cpp}
+
+\subsection{字典树(pbds trie / map 版)}
+pbds 的 PATRICIA trie（\texttt{pat\_trie\_tag} 配 \texttt{trie\_prefix\_search\_node\_update}）
+提供 \texttt{prefix\_range} 做前缀搜索；字符集大、节点稀疏时可以用 \texttt{std::map} 动态开点写法省内存。
+头文件 \texttt{<ext/pb\_ds/assoc\_container.hpp>}、\texttt{<ext/pb\_ds/trie\_policy.hpp>} 与 \texttt{<map>}。
+\lstinputlisting[caption={字典树(pbds trie 与 map 版)}, breakatwhitespace=false]{cpp_templates/杂项/字典树.cpp}
+
 \subsection{cpp扩栈(win)}
 \lstinputlisting[caption={扩栈指令}]{cpp_templates/杂项/扩栈指令.cpp}
 
-\newpage
+\clearpage
 
 \section{数据结构}
 
 \subsection{ST表}
-\lstinputlisting[caption={ST表}, label={lst:ST表}, breakatwhitespace=false]{cpp_templates/数据结构/ST表.cpp}
+\lstinputlisting[caption={ST表}, breakatwhitespace=false]{cpp_templates/数据结构/ST表.cpp}
 \subsection{并查集}
-\lstinputlisting[caption={普通并查集}, label={lst:dsu-basic}]{cpp_templates/数据结构/dsu-basic.cpp}
+\lstinputlisting[caption={普通并查集}]{cpp_templates/数据结构/dsu-basic.cpp}
 
 \newpage
-\lstinputlisting[caption={weighted-dsu}, label={lst:dsu-weighted}]{cpp_templates/数据结构/dsu-weighted.cpp}
+\lstinputlisting[caption={weighted-dsu}]{cpp_templates/数据结构/dsu-weighted.cpp}
 
 \lstinputlisting[caption={可撤销并查集}]{cpp_templates/数据结构/可撤销并查集.cpp}
 
+可持久化并查集：用主席树维护 \texttt{fa} 与秩，按秩合并（\textbf{不能路径压缩}，
+压缩会改写历史版本），支持合并、回到历史版本、询问连通性。
+输入格式（P3402）：\texttt{1 a b} 合并并产生新版本；\texttt{2 k} 回到第 $k$ 次操作之后的状态；
+\texttt{3 a b} 询问是否同集合（输出 1/0）。单次操作 $O(\log^2 n)$——沿 \texttt{fa}
+走 $O(\log n)$ 层，每层查询 $O(\log n)$。
+\lstinputlisting[caption={可持久化并查集}, breakatwhitespace=false]{cpp_templates/数据结构/可持久化并查集.cpp}
 
-\subsection{线段树(普通区间和查询)}
-\lstinputlisting[caption={common-Seg}, label={lst:Seg-basic}]{cpp_templates/数据结构/Seg-basic.cpp}
+
+\subsection{线段树(区间加 + 区间和)}
+处理下标区间 $[0,n]$：先准备好 \texttt{ll} 的 typedef 和初始数组 \texttt{a[]}
+（\texttt{a[l]} 是叶子 $l$ 的初值），再 \texttt{Seg seg(n);} 建树，
+\texttt{seg.add(l, r, k, 1);} 区间加、\texttt{seg.qry(l, r, 1);} 区间求和。
+\lstinputlisting[caption={common-Seg}]{cpp_templates/数据结构/Seg-basic.cpp}
+
+\subsection{可持久化线段树(主席树)}
+写时复制 + 标记永久化（懒标记不 pushdown），所以历史版本能安全共享同一批节点；
+支持区间加、区间和、历史版本查询与回退。下面的代码即 HDU 4348 \emph{To the moon}
+的做法（命令 \texttt{C/Q/H/B}）：建树 $O(n\log n)$，每次修改与查询 $O(\log n)$。
+命令含义：\texttt{C l r d} 区间 $[l,r]$ 加 $d$ 并把当前时间 $+1$；\texttt{Q l r} 询问当前时间的区间和；
+\texttt{H l r t} 询问时间 $t$ 的区间和；\texttt{B t} 回到时间 $t$（之后的版本作废）。
+
+\textbf{用法}：先声明 \texttt{PSeg<Info> seg;}，节点池按需增长，不需要预估空间。
+模板参数 \texttt{Info} 需要满足：默认构造为空元、支持 \texttt{operator+}、
+\texttt{Info(int)} 与 \texttt{Info} $\times$ \texttt{int}（按区间长度缩放）；
+取 \texttt{Info = ll} 就是"区间加 + 区间和"，换成结构体可做区间最值、区间 gcd 等。
+\begin{itemize}
+    \item \texttt{int root = seg.build(1, n, A);}——$A$ 是 1-indexed 数组，
+          返回版本 $0$ 的根；
+    \item \texttt{root = seg.updRange(root, 1, n, l, r, d);}——区间 $[l,r]$ 每个数加 $d$，
+          返回新版本的根，旧版本不受影响；
+    \item \texttt{seg.sum(root, 1, n, l, r);}——当前版本的区间和；
+    \item \texttt{seg.sum(his[t], 1, n, l, r);}——历史版本 $t$ 的区间和，
+          只要把每个版本的根记到 \texttt{his[t]} 里即可。
+\end{itemize}
+空间上建树占 $4n$ 个节点，每次修改只复制访问路径上的 $O(\log n)$ 个节点。
+\lstinputlisting[caption={可持久化线段树(主席树)}, breakatwhitespace=false]{cpp_templates/数据结构/可持久化线段树.cpp}
 
 \subsection{笛卡尔树}
-\lstinputlisting[caption={cartesian-tree}, label={lst:cartesian-tree}]{cpp_templates/数据结构/cartesian-tree.cpp}
+\lstinputlisting[caption={cartesian-tree}]{cpp_templates/数据结构/cartesian-tree.cpp}
 
 \subsection{字典树}
-\lstinputlisting[caption={Trie}, label={lst:Trie}]{cpp_templates/数据结构/Trie.cpp}
+\texttt{Trie trie(n);} 里的 $n$ 是\textbf{所有串的总长度上限}（也就是节点数上界），要开够；
+字符映射为 \texttt{A-Z} $\to 0..25$、\texttt{a-z} $\to 26..51$、
+\texttt{0-9} $\to 52..61$。
+\lstinputlisting[caption={Trie}]{cpp_templates/数据结构/Trie.cpp}
 
-\lstinputlisting[caption={01-Trie}, label={lst:01-Trie}]{cpp_templates/数据结构/01-Trie.cpp}
+\lstinputlisting[caption={01-Trie}]{cpp_templates/数据结构/01-Trie.cpp}
 
 
 \subsection{平衡树}
 
-\lstinputlisting[caption={FHQ-Treap}, label={lst:FHQ-Treap}, breakatwhitespace=false]{cpp_templates/数据结构/FHQ-Treap.cpp}
+\lstinputlisting[caption={FHQ-Treap}, breakatwhitespace=false]{cpp_templates/数据结构/FHQ-Treap.cpp}
 
 
 \subsection{根号分治}
@@ -187,37 +251,37 @@
     \item 接下来 $q$ 行：每行两个整数 $x, y$（$1 \le x, y \le 10^9$），表示一次询问。
 \end{itemize}
 
-\section*{输出格式}
+\subsubsection*{输出格式}
 输出 $q$ 行，每行一个整数，表示对应询问的答案。
 
-\section*{简要分析}
+\subsubsection*{简要分析}
 给定序列 $A[1..n]$ 和询问 $(x,y)$，需统计满足 $i<j$ 且 $A[i]=x, A[j]=y$ 的数对数量。记 $pos[v]$ 为值 $v$ 在序列中出现的位置集合（升序排列），则答案可表示为：
-$$
+\[
 \sum_{p \in pos[x]} \left( |pos[y]| - \text{upper\_bound}(pos[y], p) \right)
-$$
+\]
 或等价表示为：
-$$
+\[
 \sum_{p \in pos[y]} \text{lower\_bound}(pos[x], p)
-$$
+\]
 
-\section*{核心划分}
+\subsubsection*{核心划分}
 设阈值 $B = \sqrt{n}$（取整），将所有值分为两类：
 \begin{enumerate}
     \item \textbf{高频值（Heavy）}：满足 $|pos[v]| > B$ 的值，记高频值集合为 $H$；
     \item \textbf{低频值（Light）}：满足 $|pos[v]| \le B$ 的值。
 \end{enumerate}
 
-\section*{预处理阶段（离线预处理高频值对）}
+\subsubsection*{预处理阶段（离线预处理高频值对）}
 对于任意两个高频值 $u, v \in H$，预计算数对 $(u,v)$ 的答案并存储在哈希表 $mp$ 中：
-$$
+\[
 \begin{aligned}
 mp[(u,v)] &= \sum_{p \in pos[u]} \Bigl( |pos[v]| \\
            &\qquad - \text{upper\_bound}(pos[v], p) \Bigr)
 \end{aligned}
-$$
+\]
 预处理时间复杂度：$O(|H|^2 \cdot B)$，由于 $|H| \le \frac{n}{B}$，故总复杂度为 $O(nB)$。
 
-\section*{查询阶段（分情况处理）}
+\subsubsection*{查询阶段（分情况处理）}
 对每个询问 $(x,y)$，分三类处理（结合记忆化避免重复计算）：
 \begin{enumerate}
     \item 若 $(x,y)$ 已计算过（记忆化哈希表 $\text{memo}$ 存在），直接返回结果；
@@ -230,15 +294,15 @@ $$
           单次查询时间复杂度：$O(B)$。
 \end{enumerate}
 
-\section*{复杂度分析}
+\subsubsection*{复杂度分析}
 预处理复杂度：$O(n\sqrt{n})$；
 单次查询复杂度：$O(\sqrt{n})$，总查询复杂度：$O(q\sqrt{n})$；
 整体时间复杂度：$O((n+q)\sqrt{n})$，可通过 $10^5$ 规模的数据。
-\lstinputlisting[caption={根号分治}, label={lst:根号分治}, breakatwhitespace=false]{cpp_templates/数据结构/根号分治.cpp}
+\lstinputlisting[caption={根号分治}, breakatwhitespace=false]{cpp_templates/数据结构/根号分治.cpp}
 
 
-\subsubsection{无向图三元环计数}
-\section*{题面简述}
+\subsection{无向图三元环计数}
+\subsubsection*{题面简述}
 
 给定一个 $n$ 个点 $m$ 条边的简单无向图（无重边、无自环，不保证连通），求图中三元环的个数。
 
@@ -246,7 +310,7 @@ $$
 
 数据范围：$1 \le n \le 10^5$，$1 \le m \le 2 \times 10^5$。
 
-\section*{做法}
+\subsubsection*{做法}
 
 采用经典的\textbf{无向边定向 + 枚举}算法。
 
@@ -257,7 +321,7 @@ $$
 
 由于定向后每个三元环的三条边恰好形成一条有向路径 $u \to v \to w$（其中 $u \to w$ 也存在），因此每个三元环恰好被统计一次，无需去重。
 
-\section*{复杂度分析}
+\subsubsection*{复杂度分析}
 
 \textbf{引理}：定向后每个点的出度 $d^+(u) \le \sqrt{2m}$。
 
@@ -282,33 +346,33 @@ $$
 对于本题 $m = 2 \times 10^5$，操作量约为 $2 \times 10^5 \times 632 \approx 1.26 \times 10^8$，可以通过。空间复杂度为 $O(n + m)$。
 \lstinputlisting[caption={根号分治求三元环计数}]{cpp_templates/数据结构/根号分治求三元环计数.cpp}
 \subsection{莫队}
-\lstinputlisting[caption={普通莫队算法}, label={lst:mo-algo}, breakatwhitespace=false]{cpp_templates/数据结构/mo-algo.cpp}
+\lstinputlisting[caption={普通莫队算法}, breakatwhitespace=false]{cpp_templates/数据结构/mo-algo.cpp}
 
 \section{树}
 \subsection{LCA}
 
 
-\lstinputlisting[caption={dfn 大跳LCA}, label={lst:dfn log求LCA}]{cpp_templates/树/dfn log求LCA.cpp}
+\lstinputlisting[caption={dfn 大跳LCA}]{cpp_templates/树/dfn log求LCA.cpp}
 
-\lstinputlisting[caption={dfn 实现O1 LCA}, label={lst:dfn O1求LCA}]{cpp_templates/树/dfn O1求LCA.cpp}
+\lstinputlisting[caption={dfn 实现O1 LCA}]{cpp_templates/树/dfn O1求LCA.cpp}
 \subsection{树的直径}
-\lstinputlisting[caption={两遍dfs查直径}, label={lst:树的直径}]{cpp_templates/树/树的直径.cpp}
+\lstinputlisting[caption={两遍dfs查直径}]{cpp_templates/树/树的直径.cpp}
 
-\lstinputlisting[caption={树形dp求直径}, label={lst:树形dp求直径}]{cpp_templates/树/树形dp求直径.cpp}
+\lstinputlisting[caption={树形dp求直径}]{cpp_templates/树/树形dp求直径.cpp}
 \subsection{树链剖分}
-\lstinputlisting[caption={树链剖分}, label={lst:树链剖分}, breakatwhitespace=false]{cpp_templates/树/树链剖分.cpp}
+\lstinputlisting[caption={树链剖分}, breakatwhitespace=false]{cpp_templates/树/树链剖分.cpp}
 \subsection{树上启发式合并}
-\section*{题面简述}
+\subsubsection*{题面简述}
 
 给一棵以 $1$ 为根的树，共 $n$ 个结点，每个结点有一个颜色 $c[i]$。每次询问给出一个结点 $u$，求以 $u$ 为根的子树中有多少种不同的颜色。
 
-\subsection*{第一步：求 DFS 序与子树区间}
+\subsubsection*{第一步：求 DFS 序与子树区间}
 
 对树进行一次 DFS，记录每个结点的进入时间 $\mathrm{in}[u]$ 和离开时间 $\mathrm{out}[u]$。则以 $u$ 为根的子树恰好对应 DFS 序中的连续区间 $[\mathrm{in}[u],\;\mathrm{out}[u]]$。
 
 同时在 DFS 过程中记录每个结点的\textbf{重儿子}（子树大小最大的儿子），记为 $\mathrm{heavy}[u]$。
 
-\subsection*{第二步：启发式合并（DSU on Tree）}
+\subsubsection*{第二步：启发式合并（DSU on Tree）}
 
 对每个结点 $u$，按如下顺序处理：
 
@@ -331,15 +395,15 @@ $$
     \item 若 $u$ 本身是其父结点的轻儿子，则暴力清除整棵子树的贡献（将 $\mathrm{cnt}[\cdot]$ 和 $\mathrm{tot}$ 恢复）。
 \end{enumerate}
 
-\subsection*{第三步：回答询问}
+\subsubsection*{第三步：回答询问}
 
 所有询问离线处理。对于每个询问的结点 $u$，直接输出 $\mathrm{ans}[u]$ 即可。
 
-\section*{正确性说明}
+\subsubsection*{正确性说明}
 
 启发式合并的核心思想在于：每次只保留重儿子的信息，轻儿子的信息暴力重算。由于每个结点到根的路径上至多有 $O(\log n)$ 条轻边（每经过一条轻边，子树大小至少翻倍），所以每个结点被暴力遍历的总次数为 $O(\log n)$。
 
-\section*{复杂度分析}
+\subsubsection*{复杂度分析}
 
 \begin{itemize}
     \item \textbf{时间复杂度：}每个结点被暴力加入/清除计数数组的次数为其到根路径上的轻边数，至多 $O(\log n)$ 次。因此总时间复杂度为：
@@ -351,81 +415,89 @@ $$
 \end{itemize}
 \lstinputlisting[caption={树上启发式合并}]{cpp_templates/树/树上启发式合并.cpp}
 
-\newpage
+\clearpage
 \section{图论}
 \subsection{SPFA}
 
-\lstinputlisting[caption={SPFA}, label={lst:SPFA}]{cpp_templates/图论/SPFA.cpp}
+\lstinputlisting[caption={SPFA}]{cpp_templates/图论/SPFA.cpp}
 
 
 \subsection{Dijkstra}
 
-\lstinputlisting[caption={Dijkstra(稀疏图堆优化版本)}, label={lst:Dijkstra}]{cpp_templates/图论/Dijkstra.cpp}
+\lstinputlisting[caption={Dijkstra(稀疏图堆优化版本)}]{cpp_templates/图论/Dijkstra.cpp}
 
-\lstinputlisting[caption={Dijkstra(稠密图邻接矩阵版)}, label={lst:dijkstra-dense}]{cpp_templates/图论/dijkstra-dense.cpp}
+\lstinputlisting[caption={Dijkstra(稠密图邻接矩阵版)}]{cpp_templates/图论/dijkstra-dense.cpp}
 \subsection{最小生成树}
-\lstinputlisting[caption={Kruskal求最小生成树}, label={Kruskal}]{cpp_templates/图论/Kruskal.cpp}
+\lstinputlisting[caption={Kruskal求最小生成树}]{cpp_templates/图论/Kruskal.cpp}
 
-\lstinputlisting[caption={Prim求最小生成树(小根堆优化)}, label={lst:Prim}]{cpp_templates/图论/Prim.cpp}
+\lstinputlisting[caption={Prim求最小生成树(小根堆优化)}]{cpp_templates/图论/Prim.cpp}
 
 \subsection{Kruskal重构树}
 Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
-\lstinputlisting[caption={Kruskal重构树}, label={lst:Kruskal重构树}]{cpp_templates/图论/Kruskal重构树.cpp}
+\lstinputlisting[caption={Kruskal重构树}]{cpp_templates/图论/Kruskal重构树.cpp}
 
 \subsection{欧拉回路}
-\lstinputlisting[caption={有向图欧拉回路}, label={有向图欧拉回路}]{cpp_templates/图论/有向图欧拉回路.cpp}
+\lstinputlisting[caption={有向图欧拉回路}]{cpp_templates/图论/有向图欧拉回路.cpp}
 
-\lstinputlisting[caption={无向图欧拉回路}, label={无向图欧拉回路}]{cpp_templates/图论/无向图欧拉回路.cpp}
+\lstinputlisting[caption={无向图欧拉回路}]{cpp_templates/图论/无向图欧拉回路.cpp}
 
 \subsection{二分图}
 
 \subsubsection{二分图染色}
-\lstinputlisting[caption={二分图染色}, label={二分图染色}]{cpp_templates/图论/二分图染色.cpp}
-\subsubsection{二分图最大权匹配}
-\lstinputlisting[caption={二分图最大匹配}, label={二分图最大匹配}]{cpp_templates/图论/二分图最大匹配.cpp}
+\lstinputlisting[caption={二分图染色}]{cpp_templates/图论/二分图染色.cpp}
+\subsubsection{二分图最大匹配(匈牙利算法)}
+\lstinputlisting[caption={二分图最大匹配(匈牙利)}]{cpp_templates/图论/二分图最大匹配.cpp}
 \subsubsection{二分图最大匹配(Dinic)}
-\lstinputlisting[caption={Dinic求二分图最大匹配}, label={lst:dinic二分图最大匹配}]{cpp_templates/图论/dinic-二分图最大匹配.cpp}
+\lstinputlisting[caption={Dinic求二分图最大匹配}]{cpp_templates/图论/dinic-二分图最大匹配.cpp}
+\subsubsection{二分图最大权匹配(KM)}
+KM 算法（匈牙利算法的带权版）：左部 $n$ 个点、右部 $m$ 个点（要求 $n \le m$），求权和最大的匹配。
+不存在的边把边权填成足够小的负数（代码里是 \texttt{NEG}），并保证存在完美匹配即可，
+复杂度 $O(n^2 m)$。若题目允许"不匹配"，把每条边权改成 $\max(0, w)$ 再跑完美匹配即可。
+输入：第一行 $n\;m\;e$，随后 $e$ 行 $u\;v\;x$（左部 $u$ 到右部 $v$、边权 $x$）；
+输出：第一行最大权完美匹配的权值和，第二行每个左部点匹配到的右部点
+（为 0 说明该点没匹配上，即数据不存在完美匹配）。
+\lstinputlisting[caption={二分图最大权匹配(KM)}]{cpp_templates/图论/KM最大权匹配.cpp}
 \subsection{差分约束}
 
-给定 \(n\) 个变量 \(x_1, x_2, \dots, x_n\) 与 \(m\) 个差分约束 \(x_c - x_{c'} \leq y\)。
+给定 $n$ 个变量 $x_1, x_2, \dots, x_n$ 与 $m$ 个差分约束 $x_c - x_{c'} \leq y$。
 
 求任意一组满足所有约束的可行解。无解输出 \texttt{NO}。
 
-\lstinputlisting[caption={spfa差分约束}, label={lst:spfa差分约束}]{cpp_templates/图论/spfa差分约束.cpp}
+\lstinputlisting[caption={spfa差分约束}]{cpp_templates/图论/spfa差分约束.cpp}
 \subsection{缩点}
 \subsubsection{SCC(强连通分量)}
-\lstinputlisting[caption={SCC}, label={SCC}]{cpp_templates/图论/SCC.cpp}
+\lstinputlisting[caption={SCC}]{cpp_templates/图论/SCC.cpp}
 \subsubsection{DECC(边双联通分量)}
-\lstinputlisting[caption={DECC}, label={DECC}]{cpp_templates/图论/DECC.cpp}
+\lstinputlisting[caption={DECC}]{cpp_templates/图论/DECC.cpp}
 \subsection{two-sat}
-\lstinputlisting[caption={two-sat}, label={two-sat}]{cpp_templates/图论/two-sat.cpp}
-\newpage
+\lstinputlisting[caption={two-sat}]{cpp_templates/图论/two-sat.cpp}
+\clearpage
 \section{字符串}
 \subsection{字符串哈希}
-\lstinputlisting[caption={字符串哈希}, label={lst:字符串哈希}]{cpp_templates/字符串/字符串哈希.cpp}
+\lstinputlisting[caption={字符串哈希}]{cpp_templates/字符串/字符串哈希.cpp}
 
 \subsection{KMP}
-\lstinputlisting[caption={KMP1}, label={KMP1}]{cpp_templates/字符串/KMP1.cpp}
+\lstinputlisting[caption={KMP1}]{cpp_templates/字符串/KMP1.cpp}
 
-\lstinputlisting[caption={KMP2}, label={KMP2}]{cpp_templates/字符串/KMP2.cpp}
+\lstinputlisting[caption={KMP2}]{cpp_templates/字符串/KMP2.cpp}
 
 \subsection{Z函数(扩展KMP)}
-\lstinputlisting[caption={Z函数}, label={lst:Z函数}]{cpp_templates/字符串/Z函数.cpp}
+\lstinputlisting[caption={Z函数}]{cpp_templates/字符串/Z函数.cpp}
 
 \subsection{Manacher(马拉车)}
-\lstinputlisting[caption={马拉车求最长回文子串}, label={最长回文子串}]{cpp_templates/字符串/最长回文子串.cpp}
+\lstinputlisting[caption={马拉车求最长回文子串}]{cpp_templates/字符串/最长回文子串.cpp}
 
 \subsection{回文自动机(PAM)}
 维护每个前缀的本质不同回文子串个数，可统计每个回文串的出现次数。
-\lstinputlisting[caption={PAM(回文自动机)}, label={lst:PAM}]{cpp_templates/字符串/PAM.cpp}
-\newpage
+\lstinputlisting[caption={PAM(回文自动机)}]{cpp_templates/字符串/PAM.cpp}
+\clearpage
 \section{动态规划}
 
 \subsection{01背包}
-\lstinputlisting[caption={01背包}, label={最朴素01背包}]{cpp_templates/动态规划/最朴素01背包.cpp}
-\lstinputlisting[caption={bitset优化可行01背包}, label={bitset优化可行背包}]{cpp_templates/动态规划/bitset优化可行背包.cpp}
+\lstinputlisting[caption={01背包}]{cpp_templates/动态规划/最朴素01背包.cpp}
+\lstinputlisting[caption={bitset优化可行01背包}]{cpp_templates/动态规划/bitset优化可行背包.cpp}
 
-\lstinputlisting[caption={双向搜索优化纯搜索}, label={双向搜索优化大值域枚举}]{cpp_templates/动态规划/双向搜索优化大值域枚举.cpp}
+\lstinputlisting[caption={双向搜索优化纯搜索}]{cpp_templates/动态规划/双向搜索优化大值域枚举.cpp}
 
 \subsection{完全背包}
 \lstinputlisting[caption={朴素完全背包}]{cpp_templates/动态规划/朴素完全背包.cpp}
@@ -436,7 +508,7 @@ Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
 
 \textbf{25上海市赛I}
 
-\section*{题目大意}
+\subsubsection*{题目大意}
 给定一棵以 $1$ 为根的有根树，每个节点上的人要么是“诚实者”（恒说真话），要么是“说谎者”（恒说假话）。每个节点 $i$ 的人声称：“以我为根的子树中，恰好有 $a_i$ 个诚实者。”
 求所有满足以下逻辑自洽条件的身份分配方案数：
 \begin{itemize}
@@ -451,44 +523,44 @@ Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
     \item 接下来 $n-1$ 行：每行两个正整数 $u_i, v_i$（$1 \le u_i, v_i \le n$），表示树的一条边，保证输入构成一棵以 $1$ 为根的有根树。
 \end{itemize}
 
-\section*{输出格式}
+\subsubsection*{输出格式}
 对每组数据输出一行一个整数，表示满足条件的真假分配情况数量，答案对 $998244353$ 取模。
 
 
-\section*{简要分析}
+\subsubsection*{简要分析}
 采用树形背包 DP 求解，通过后序遍历合并子树状态，根据节点身份（诚实/说谎）约束转移，统计合法方案数。
 
-\section*{状态定义}
+\subsubsection*{状态定义}
 \begin{itemize}
     \item $f[u][j]$：仅用节点 $u$ 的子树，产生 $j$ 个诚实者的合法方案数（不包含 $u$ 自身）；
     \item $dp[u][j]$：用节点 $u$ 的子树 + $u$ 自身，产生 $j$ 个诚实者的合法方案数；
     \item $siz[u]$：以 $u$ 为根的子树大小。
 \end{itemize}
 
-\section*{状态转移}
+\subsubsection*{状态转移}
 1. 初始化：$f[u][0] = 1$，$siz[u] = 1$；
 2. 子树合并：遍历子节点 $v$，用**树形背包**倒序枚举合并状态：
-   $$nxt[j+k] += f[u][j] \times dp[v][k] \pmod{mod}$$
+   \[nxt[j+k] += f[u][j] \times dp[v][k] \pmod{mod}\]
    用 $nxt$ 更新 $f[u]$，并更新子树大小；
 3. 身份转移：
    - 说谎者：$dp[u][j] = f[u][j] \ (j \neq a[u])$；
    - 诚实者：$dp[u][a[u]] = f[u][a[u]-1] \ (a[u] \ge 1)$。
 
-\section*{复杂度分析}
+\subsubsection*{复杂度分析}
 代码虽为三重循环，本质是树形背包均摊复杂度：
 任意两个节点仅在其最近公共祖先处被枚举一次，总操作数等于子树大小乘积和，**严格为 $O(n^2)$**；
 结合题目约束 $\sum n \le 5000$，总计算量不超过 $2.5 \times 10^7$，可轻松通过。
 
-\section*{答案统计}
+\subsubsection*{答案统计}
 最终答案为根节点 $1$ 的所有合法状态之和：$\sum\limits_{i=0}^{siz[1]} dp[1][i] \pmod{998244353}$。
 \lstinputlisting[caption={树上背包}, breakatwhitespace=false]{cpp_templates/动态规划/树上背包.cpp}
 
 \subsection{换根dp}
-\lstinputlisting[caption={换根dp}, label={换根dp}, breakatwhitespace=false]{cpp_templates/动态规划/换根dp.cpp}
+\lstinputlisting[caption={换根dp}, breakatwhitespace=false]{cpp_templates/动态规划/换根dp.cpp}
 
 
 \subsection{区间dp}
-\lstinputlisting[caption={区间dp典}, label={区间dp}]{cpp_templates/动态规划/区间dp.cpp}
+\lstinputlisting[caption={区间dp典}]{cpp_templates/动态规划/区间dp.cpp}
 \subsection{SOS dp}
 
 \subsubsection*{例}
@@ -506,74 +578,102 @@ Kruskal重构树上任意两点lca权值代表两点间最大边权最小值
 \lstinputlisting[caption={SOSdp解决数位不发生进位问题}, breakatwhitespace=false]{cpp_templates/动态规划/SOSdp解决数位不发生进位问题.cpp}
 \subsection{数位dp}
 \lstinputlisting[caption={统计a-b中各个数位出现个数}]{cpp_templates/动态规划/统计a-b中各个数位出现个数.cpp}
-\newpage
+\clearpage
 \section{数学}
 
 \subsection{筛法求因数个数}
-\lstinputlisting[caption={因数筛}, label={lst:因数筛}]{cpp_templates/数学/因数筛.cpp}
+\lstinputlisting[caption={因数筛}]{cpp_templates/数学/因数筛.cpp}
 
 \subsection{筛法求欧拉函数}
-\lstinputlisting[caption={欧拉筛}, label={lst:欧拉筛}]{cpp_templates/数学/欧拉筛.cpp}
+\texttt{init(n)} 预处理 $1..n$（要求 $n \le N-1$，$N$ 是文件里给出的数组上界），
+之后直接用 \texttt{phi[i]}；素数表在 \texttt{p[0..cnt-1]}。
+\lstinputlisting[caption={欧拉筛}]{cpp_templates/数学/欧拉筛.cpp}
 
 \subsection{筛法求莫比乌斯函数}
-\lstinputlisting[caption={莫比乌斯函筛}, label={lst:莫比乌斯筛}]{cpp_templates/数学/莫比乌斯筛.cpp}
+同样 \texttt{init(n)} 之后直接用 \texttt{mu[i]}；与欧拉筛共用同一套线性筛骨架。
+\lstinputlisting[caption={莫比乌斯函筛}]{cpp_templates/数学/莫比乌斯筛.cpp}
 
 
 \newpage
 \subsection{矩阵快速幂}
-\lstinputlisting[caption={矩阵快速幂 basic}, label={lst:matrix-qpow-base}]{cpp_templates/数学/matrix-qpow-base.cpp}
+\lstinputlisting[caption={矩阵快速幂 basic}]{cpp_templates/数学/matrix-qpow-base.cpp}
 
-\lstinputlisting[caption={矩阵快速幂 max-plus}, label={lst:matrix-qpow-max-plus}]{cpp_templates/数学/matrix-qpow-max-plus.cpp}
+\lstinputlisting[caption={矩阵快速幂 max-plus}]{cpp_templates/数学/matrix-qpow-max-plus.cpp}
 \subsection{第二类斯特林数}
 
-第二类斯特林数（斯特林子集数）\(\begin{Bmatrix}n\\ k\end{Bmatrix}\)，也可记做 \(S(n,k)\)，表示将 \(n\) 个两两不同的元素划分为 \(k\) 个互不区分的非空子集的方案数。
+第二类斯特林数（斯特林子集数）$\begin{Bmatrix}n\\ k\end{Bmatrix}$，也可记做 $S(n,k)$，表示将 $n$ 个两两不同的元素划分为 $k$ 个互不区分的非空子集的方案数。
 
-\lstinputlisting[caption={Stirling 数}, label={lst:Stirling 数}]{cpp_templates/数学/Stirling 数.cpp}
+\lstinputlisting[caption={Stirling 数}]{cpp_templates/数学/Stirling 数.cpp}
 
 \newpage
 \subsection{卡特兰数}
 Catalan 数有如下常见的表达式：
 
 \[
-C_n = \frac{1}{n+1}\binom{2n}{n} = \frac{(2n)!}{n!(n+1)!},\quad n\ge 0. \tag{2}
+C_n = \frac{1}{n+1}\binom{2n}{n} = \frac{(2n)!}{n!(n+1)!},\quad n\ge 0. \tag{1}
 \]
 
 \[
-C_n = \binom{2n}{n} - \binom{2n}{n+1},\quad n \ge 0. \tag{3}
+C_n = \binom{2n}{n} - \binom{2n}{n+1},\quad n \ge 0. \tag{2}
 \]
 
 \[
-C_n = \frac{4n-2}{n+1}C_{n-1},\quad n>0,\ C_0=1. \tag{4}
+C_n = \frac{4n-2}{n+1}C_{n-1},\quad n>0,\ C_0=1. \tag{3}
 \]
 数列的前几项为：1,1,2,5,14,42,132,429,1430,…
 \subsection{排列组合类-含Lucas}
 \lstinputlisting{cpp_templates/数学/排列组合类(含lucas).cpp}
 \subsection{高斯消元}
-\lstinputlisting[caption={高斯消元}, label={高斯消元}]{cpp_templates/数学/高斯消元.cpp}
+\lstinputlisting[caption={高斯消元}]{cpp_templates/数学/高斯消元.cpp}
 
 \subsection{FFT}
 \lstinputlisting[caption={FFT解决区间和是质数的数的区间个数}]{cpp_templates/数学/FFT解决区间和是质数的数的区间个数.cpp}
 
 \subsection{NTT}
-\lstinputlisting[caption={NTT多项式乘法(模998244353)}, label={lst:ntt}]{cpp_templates/数学/ntt.cpp}
+\lstinputlisting[caption={NTT多项式乘法(模998244353)}]{cpp_templates/数学/ntt.cpp}
+
+\subsection{多项式乘幂级数的分治求和}
+给定模数 $p$、底数 $x$、次数 $d$，求
+\[
+    \sum_{k=1}^{n} k^d x^k \bmod p \qquad (n \text{ 可达 } 10^{18}).
+\]
+逐项算要 $O(n)$；把 $k^d$ 看成多项式 $f(y)=y^d$ 之后可以用分治做到 $O(d^2\log n)$，
+而且一次就能算出所有 $i=0..d$ 的 $\sum_{k=1}^{n} k^i x^k$，于是任意多项式
+$f(y)=\sum_i c_i y^i$ 只要按系数 $c_i$ 线性组合即可。
+
+记 $S_i(m)=\sum_{k=1}^{m} k^i x^k$、$P(m)=x^m$。把区间 $[1,2m]$ 拆成 $[1,m]$ 与 $[m+1,2m]$，
+后一半令 $k=m+t$，用二项式定理展开：
+\[
+    S_i(2m) = S_i(m) + x^m \sum_{j=0}^{i} \binom{i}{j} m^{\,i-j} S_j(m),
+\]
+奇数长度再补上最后一项：
+\[
+    S_i(2m+1) = S_i(2m) + (2m+1)^i x^{2m+1}.
+\]
+于是按 $n$ 二分（奇偶分别处理）：每层对 $i=0..d$ 各做一次 $O(d)$ 的求和，单层 $O(d^2)$，
+共 $O(\log n)$ 层，总复杂度 $O(d^2\log n)$，额外空间 $O(d\log n)$（递归栈）。
+当 $d$ 很大时，合并里那个二项式卷积可以用 NTT 加速到 $O(d\log d\log n)$。
+另外注意 $x$ 与 $n$ 都可能远大于 $p$，所有取模都必须在乘法之前完成，
+否则 \texttt{long long} 会在连乘时溢出。
+\lstinputlisting[caption={分治求幂级数和(多项式乘幂级数)}, breakatwhitespace=false]{cpp_templates/数学/幂级数求和(分治).cpp}
 
 \subsection{线性递推(Berlekamp-Massey)}
 用前若干项求出最短线性递推式，再用 $O(k^2\log n)$ 的快速幂求第 $n$ 项（如 Fibonacci 取 $n$ 很大时）。
-\lstinputlisting[caption={Berlekamp-Massey + 线性递推}, label={lst:BM线性递推}]{cpp_templates/数学/KM算法.cpp}
+\lstinputlisting[caption={Berlekamp-Massey + 线性递推}]{cpp_templates/数学/BM算法.cpp}
 
 \subsection{Pollard-Rho}
 \lstinputlisting[caption={Pollard-Rho}, breakatwhitespace=false]{cpp_templates/数学/Pollard-Rho.cpp}
 
 \subsection{异或线性基}
-\lstinputlisting[caption={异或线性基}, label={异或线性基}]{cpp_templates/数学/异或线性基.cpp}
+\lstinputlisting[caption={异或线性基}]{cpp_templates/数学/异或线性基.cpp}
 
 \subsection{数论分块}
-\section*{题面简述}
+\subsubsection*{题面简述}
 
 给定一个正整数 $x$，求 $\sum_{i=1}^{x} d(i)$，其中 $d(i)$ 表示 $i$ 的因数个数。
 
 
-\subsection*{第一步：转化求和式}
+\subsubsection*{第一步：转化求和式}
 
 由因数个数的定义 $d(i) = \sum_{d \mid i} 1$，将求和交换顺序：
 \[
@@ -582,7 +682,7 @@ C_n = \frac{4n-2}{n+1}C_{n-1},\quad n>0,\ C_0=1. \tag{4}
 
 即问题转化为求 $\sum_{d=1}^{x} \left\lfloor \frac{x}{d} \right\rfloor$。
 
-\subsection*{第二步：整除分块}
+\subsubsection*{第二步：整除分块}
 
 $\left\lfloor \frac{x}{d} \right\rfloor$ 的取值至多只有 $O(\sqrt{x})$ 种。对于每一种取值 $v = \left\lfloor \frac{x}{l} \right\rfloor$，所有满足 $\left\lfloor \frac{x}{d} \right\rfloor = v$ 的 $d$ 构成一个连续区间 $[l, r]$，其中：
 \[
@@ -601,22 +701,22 @@ $\left\lfloor \frac{x}{d} \right\rfloor$ 的取值至多只有 $O(\sqrt{x})$ 种
 
 每次令 $l \leftarrow r + 1$ 跳到下一个块，直到 $l > x$。
 
-\section*{复杂度分析}
+\subsubsection*{复杂度分析}
 
 $\left\lfloor \frac{x}{d} \right\rfloor$ 的不同取值个数为 $O(\sqrt{x})$（当 $d \le \sqrt{x}$ 时至多 $\sqrt{x}$ 种，当 $d > \sqrt{x}$ 时 $\left\lfloor \frac{x}{d} \right\rfloor < \sqrt{x}$，同样至多 $\sqrt{x}$ 种），因此整除分块的块数为 $O(\sqrt{x})$，每块内仅需 $O(1)$ 计算。
 
 总时间复杂度为 $O(\sqrt{x})$，空间复杂度为 $O(1)$。
-\lstinputlisting[caption={整除分块}, label={整除分块}]{cpp_templates/数学/整除分块.cpp}
+\lstinputlisting[caption={整除分块}]{cpp_templates/数学/整除分块.cpp}
 
 \subsection{莫比乌斯反演}
-\section*{题面简述}
+\subsubsection*{题面简述}
 
 给定 $N, M$，求满足 $1 \le x \le N$，$1 \le y \le M$ 且 $\gcd(x, y)$ 为质数的有序对 $(x, y)$ 的个数。
 
 多组询问，$T \le 10^4$，$N, M \le 10^7$。
 
 
-\subsection*{第一步：枚举质数}
+\subsubsection*{第一步：枚举质数}
 
 设答案为 $\mathrm{Ans}$，直接按定义展开：
 \[
@@ -627,14 +727,14 @@ $\left\lfloor \frac{x}{d} \right\rfloor$ 的不同取值个数为 $O(\sqrt{x})$�
     \mathrm{Ans} = \sum_{p \in \mathcal{P}} \sum_{a=1}^{\lfloor N/p \rfloor} \sum_{b=1}^{\lfloor M/p \rfloor} [\gcd(a, b) = 1]
 \]
 
-\subsection*{第二步：莫比乌斯反演}
+\subsubsection*{第二步：莫比乌斯反演}
 
 利用经典恒等式 $[\gcd(a,b)=1] = \sum_{d \mid \gcd(a,b)} \mu(d)$，代入得：
 \[
     \mathrm{Ans} = \sum_{p \in \mathcal{P}} \sum_{d=1}^{\min(\lfloor N/p \rfloor, \lfloor M/p \rfloor)} \mu(d) \left\lfloor \frac{N}{pd} \right\rfloor \left\lfloor \frac{M}{pd} \right\rfloor
 \]
 
-\subsection*{第三步：换元合并}
+\subsubsection*{第三步：换元合并}
 
 令 $T = pd$，则 $d = T/p$，对于固定的 $T$，$p$ 遍历 $T$ 的所有质因子。交换求和顺序：
 \[
@@ -651,7 +751,7 @@ $\left\lfloor \frac{x}{d} \right\rfloor$ 的不同取值个数为 $O(\sqrt{x})$�
     \mathrm{Ans} = \sum_{T=1}^{\min(N,M)} f(T) \left\lfloor \frac{N}{T} \right\rfloor \left\lfloor \frac{M}{T} \right\rfloor
 \]
 
-\subsection*{第四步：预处理 $f$ 及其前缀和}
+\subsubsection*{第四步：预处理 $f$ 及其前缀和}
 
 $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举每个质数 $p$，再枚举 $p$ 的倍数 $T = kp$，将 $\mu(k)$ 累加到 $f(T)$ 上。这一步复杂度为：
 \[
@@ -660,14 +760,14 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
 
 随后求出 $f$ 的前缀和 $F(n) = \sum_{T=1}^{n} f(T)$。
 
-\subsection*{第五步：整除分块回答询问}
+\subsubsection*{第五步：整除分块回答询问}
 
 对每组询问，利用 $\lfloor N/T \rfloor$ 和 $\lfloor M/T \rfloor$ 的取值分块性质（整除分块/数论分块），将 $T$ 的求和区间划分为 $O(\sqrt{N} + \sqrt{M})$ 个块，每块内 $\lfloor N/T \rfloor$ 和 $\lfloor M/T \rfloor$ 均为常数，利用前缀和 $F$ 即可 $O(1)$ 求出每块的贡献：
 \[
     \mathrm{Ans} = \sum_{\text{block } [l,r]} \left\lfloor \frac{N}{l} \right\rfloor \left\lfloor \frac{M}{l} \right\rfloor \bigl(F(r) - F(l-1)\bigr)
 \]
 
-\section*{复杂度分析}
+\subsubsection*{复杂度分析}
 
 \begin{itemize}
     \item \textbf{预处理}：线性筛求 $\mu$ 和质数表为 $O(n)$；枚举质数倍数计算 $f$ 为 $O(n \log \log n)$；前缀和为 $O(n)$。总预处理复杂度 $O(n \log \log n)$，其中 $n = \max(N, M) = 10^7$。
@@ -682,7 +782,7 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
 \end{itemize}
 
 总操作量约 $6 \times 10^7$，可以通过。空间复杂度为 $O(n)$。
-\lstinputlisting[caption={莫比乌斯反演}, label={莫比乌斯反演}]{cpp_templates/数学/莫比乌斯反演.cpp}
+\lstinputlisting[caption={莫比乌斯反演}]{cpp_templates/数学/莫比乌斯反演.cpp}
 
 \subsection{exgcd}
 \lstinputlisting[caption={exgcd}]{cpp_templates/数学/exgcd.cpp}
@@ -690,36 +790,81 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
 \subsection{exBSGS}
 \lstinputlisting[caption={exBSGS}]{cpp_templates/数学/exBSGS.cpp}
 
+\subsection{博弈论与SG打表}
+\subsubsection*{例题：洞烛与摩耶的游戏}
+
+给定长度为 $n$ 的正整数数组 $a=[a_1,a_2,\dots,a_n]$，\textbf{洞烛先手}，两人轮流操作。
+每一轮当前玩家必须：
+\begin{enumerate}
+    \item 选一个下标 $i$ 满足 $a_i>0$；
+    \item 对所有 $j \ne i$，令 $a_j \leftarrow \min(a_j, a_i)$；
+    \item 令 $a_i \leftarrow a_i - 1$。
+\end{enumerate}
+轮到某人时若数组已全为 $0$（无法选出正数），该玩家输，另一方胜。两人都取最优策略，
+判断谁赢。$T \le 10^4$，$\sum n \le 2\times 10^6$，$1 \le a_i \le 10^9$；
+摩耶（后手）胜输出 \texttt{Maya}，洞烛（先手）胜输出 \texttt{Insight}。
+
+\subsubsection*{第一步：SG 打表找规律}
+
+状态只和多重集有关，所以把数组\textbf{排序后}作为记忆化的键（不排序状态数会爆炸，
+规律也看不出来）。一个状态的 SG 值等于所有后继 SG 值的 mex，SG $=0$ 即先手必败。
+暴力程序对"相同取值"只枚举一次（同值元素等价），值域和 $n$ 都开小，并且
+\textbf{只打印 SG $=0$ 的必败态}——P 态列表最容易读出规律。
+
+小规模（值域 $1\sim 4$）打出的 P 态：
+\begin{itemize}
+    \item $n=1$：(2) (4)——唯一的数是偶数；
+    \item $n=2$：(1,1) (1,3) (2,2) (2,4) (3,3) (4,4)——两数同奇偶；
+    \item $n=3$：(2,2,2) (2,2,4) (2,3,3) (2,4,4) (4,4,4)——最小值为偶，且后两数同奇偶；
+    \item $n=4$：可归纳为下面的两两配对规则。
+\end{itemize}
+
+\subsubsection*{第二步：归纳规律}
+
+把排序后的数组从最小值开始配对：
+\begin{itemize}
+    \item $n$ 为奇数：最小值 $a_1$ 落单（要求 $a_1$ 为偶数），剩下一对一对配成
+          $(a_2,a_3),(a_4,a_5),\dots$；
+    \item $n$ 为偶数：配成 $(a_1,a_2),(a_3,a_4),\dots$。
+\end{itemize}
+若每一对内部奇偶性都相同（且落单元素为偶数），就是必败态，否则必胜。
+每组数据只需一次排序，$O(n\log n)$，$\sum n \le 2\times 10^6$ 轻松通过。
+
+\subsubsection*{代码}
+打表程序用 \texttt{\#if 0} 包住，把 \texttt{0} 改成 \texttt{1} 即可单独编译运行、观察 P 态；
+后面是正解。
+\lstinputlisting[caption={SG 打表与正解}, breakatwhitespace=false]{cpp_templates/数学/SG打表博弈.cpp}
+
 \section{计算几何}
 \subsection{基础定义}
-\lstinputlisting[caption={基础计算几何(精度与符号函数)}, label={lst:geo-basic}]{cpp_templates/计算几何/基础计算几何.cpp}
+\lstinputlisting[caption={基础计算几何(精度与符号函数)}]{cpp_templates/计算几何/基础计算几何.cpp}
 \subsection{点与向量}
-\lstinputlisting[caption={二维点(Point 2D)}, label={lst:geo-point2d}]{cpp_templates/计算几何/2D-point.cpp}
+\lstinputlisting[caption={二维点(Point 2D)}]{cpp_templates/计算几何/2D-point.cpp}
 
-\lstinputlisting[caption={三维点(Point 3D)}, label={lst:geo-point3d}]{cpp_templates/计算几何/3D-point.cpp}
+\lstinputlisting[caption={三维点(Point 3D)}]{cpp_templates/计算几何/3D-point.cpp}
 \subsection{直线}
-\lstinputlisting[caption={直线常用操作}, label={lst:geo-line}]{cpp_templates/计算几何/Line.cpp}
+\lstinputlisting[caption={直线常用操作}]{cpp_templates/计算几何/Line.cpp}
 \subsection{线段}
-\lstinputlisting[caption={线段常用操作}, label={lst:geo-segment}]{cpp_templates/计算几何/Segment.cpp}
+\lstinputlisting[caption={线段常用操作}]{cpp_templates/计算几何/Segment.cpp}
 \subsection{三角形}
-\lstinputlisting[caption={三角形五心与面积}, label={lst:geo-triangle}]{cpp_templates/计算几何/Triangle.cpp}
+\lstinputlisting[caption={三角形五心与面积}]{cpp_templates/计算几何/Triangle.cpp}
 \subsection{圆}
-\lstinputlisting[caption={圆常用操作与最小覆盖圆}, label={lst:geo-circle}, breakatwhitespace=false]{cpp_templates/计算几何/Circle.cpp}
+\lstinputlisting[caption={圆常用操作与最小覆盖圆}, breakatwhitespace=false]{cpp_templates/计算几何/Circle.cpp}
 \subsection{多边形}
-\lstinputlisting[caption={多边形面积/重心/点在多边形内}, label={lst:geo-polygon}]{cpp_templates/计算几何/Polygon.cpp}
+\lstinputlisting[caption={多边形面积/重心/点在多边形内}]{cpp_templates/计算几何/Polygon.cpp}
 \subsection{球}
-\lstinputlisting[caption={三维球与三维最小覆盖球}, label={lst:geo-sphere}, breakatwhitespace=false]{cpp_templates/计算几何/Sphere.cpp}
+\lstinputlisting[caption={三维球与三维最小覆盖球}, breakatwhitespace=false]{cpp_templates/计算几何/Sphere.cpp}
 \subsection{极角排序}
 \lstinputlisting[caption={极角排序求夹角最近两向量}]{cpp_templates/计算几何/极角排序求夹角最近两向量.cpp}
-\newpage
+\clearpage
 \section{Other Trick}
 
 \subsection{多路归并(含二分解)}
-\section*{题面简述}
+\subsubsection*{题面简述}
 
 给定两个长度为 $N$ 的单调不降序列 $A, B$，从 $A, B$ 中各取一个数相加可得到 $N^2$ 个和，求这 $N^2$ 个和中最小的 $N$ 个。
 
-\subsection*{第一步：小根堆初始化与去重策略}
+\subsubsection*{第一步：小根堆初始化与去重策略}
 
 由于序列 $A, B$ 均单调不降，最小的和必然是 $A_1 + B_1$（下标从 1 开始）。我们使用一个小根堆（优先队列）维护候选和，堆中元素为三元组 $(sum, i, j)$，表示 $A_i + B_j$ 的值及其对应下标。
 
@@ -735,7 +880,7 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
 
 该策略确保每个 $(i, j)$ 仅入堆一次，避免重复计算。
 
-\subsection*{第二步：提取前 $N$ 个最小和}
+\subsubsection*{第二步：提取前 $N$ 个最小和}
 
 重复执行 $N$ 次以下操作：
 \begin{enumerate}
@@ -745,14 +890,14 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
 
 最终答案数组即为所求的 $N$ 个最小和。
 
-\section*{正确性说明}
+\subsubsection*{正确性说明}
 
 由于 $A, B$ 单调不降，对任意 $(i, j)$ 有 $A_i + B_j \leq A_{i+1} + B_j$ 且 $A_i + B_j \leq A_i + B_{j+1}$。小根堆保证每次取出当前最小候选和，去重策略确保无重复入堆，且不遗漏任何可能的最小和。
 
 
 \lstinputlisting[caption={堆}]{cpp_templates/Other Trick/堆实现多路归并.cpp}
 
-\subsection*{第一步：二分查找确定第 $N$ 小的和的值 $x$}
+\subsubsection*{第一步：二分查找确定第 $N$ 小的和的值 $x$}
 
 定义函数 $\mathrm{calc}(mid)$，用于计算序列 $A, B$ 中满足 $A_i + B_j \leq mid$ 的数对 $(i, j)$ 的数量。利用单调性，该函数可通过双指针法在 $O(N)$ 时间内实现：
 \begin{itemize}
@@ -772,7 +917,7 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
     \item 当 $l = r$ 时，$x = l$ 即为第 $N$ 小的和的值。
 \end{enumerate}
 
-\subsection*{第二步：收集所有严格小于 $x$ 的和}
+\subsubsection*{第二步：收集所有严格小于 $x$ 的和}
 
 再次利用双指针法，遍历序列 $A$：
 \begin{itemize}
@@ -780,7 +925,7 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
     \item 将 $A_i + B_0, A_i + B_1, \dots, A_i + B_j$ 全部加入结果数组 $\mathrm{res}$。
 \end{itemize}
 
-\subsection*{第三步：补充等于 $x$ 的和至 $N$ 个}
+\subsubsection*{第三步：补充等于 $x$ 的和至 $N$ 个}
 
 计算还需补充的数量 $\mathrm{need} = N - \mathrm{res.size()}$。若 $\mathrm{need} > 0$，再次遍历序列 $A$：
 \begin{itemize}
@@ -788,15 +933,15 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
     \item 从 $j$ 开始向左遍历，若 $A_i + B_k == x$，则将 $x$ 加入 $\mathrm{res}$，并减少 $\mathrm{need}$，直到 $\mathrm{need} = 0$。
 \end{itemize}
 
-\subsection*{第四步：排序并输出}
+\subsubsection*{第四步：排序并输出}
 
 对结果数组 $\mathrm{res}$ 进行排序，取前 $N$ 个元素依次输出，即为所求的 $N$ 个最小和。
 
-\section*{正确性说明}
+\subsubsection*{正确性说明}
 
 二分查找确保找到的 $x$ 是满足“和 $\leq x$ 的数对数量 $\geq N$”的最小值，因此 $x$ 必为第 $N$ 小的和。通过先收集所有小于 $x$ 的和，再补充等于 $x$ 的和，确保结果数组包含恰好 $N$ 个最小和，排序后顺序正确。
 
-\section*{复杂度分析}
+\subsubsection*{复杂度分析}
 
 \begin{itemize}
     \item \textbf{时间复杂度：}
@@ -822,7 +967,7 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
 
 \subsection{Log Trick}
 前缀 GCD ,OR , AND 等操作变化的级别是呈现对数级别的.
-\section*{问题简述(Hdu 5869)}
+\subsubsection*{问题简述(Hdu 5869)}
 给定一个包含 $N$ 个正整数 $a_1, a_2, \dots, a_{N-1}, a_N$ 的数组 $a$；定义 $a$ 的子数组为 $a_1$ 到 $a_N$ 之间的连续区间。换句话说，对于 $1 \leq i \leq j \leq N$ 而言，$a_i, a_{i+1}, \dots, a_{j-1}, a_j$ 就是 $a$ 的一个子数组。对于形如 $(L, R)$ 的查询，请回答区间 $[L, R]$ 内所有子数组产生的不同GCD值的数量。
 
 
@@ -832,20 +977,20 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
     \item $1 \leq a_i \leq 1000000$
 \end{itemize}
 
-\subsection*{核心性质观察}
+\subsubsection*{核心性质观察}
 对于数组中的每个位置 $i$（作为子数组的右端点），所有以 $i$ 为右端点的子数组的 GCD 具有以下性质：
 \begin{itemize}
     \item 这些 GCD 的数量是 $O(\log a_i)$ 级别的。因为每次将新的 $a_i$ 与前序 GCD 取新的 GCD 时，数值至少减半（或保持不变），因此不同 GCD 的数量随右端点递增呈对数级增长。
     \item 可以通过维护一个列表来记录这些 GCD 及其对应的最左左端点。例如，列表中的元素为 $(g, l)$，表示以 $i$ 为右端点、GCD 为 $g$ 的子数组的左端点起始位置为 $l$。
 \end{itemize}
 
-\subsection*{离线处理与查询排序}
+\subsubsection*{离线处理与查询排序}
 \begin{enumerate}
     \item 将所有查询按右端点 $R$ 从小到大排序，并记录每个查询的原始索引，以便最后按输入顺序输出答案。
     \item 从左到右遍历数组，每次处理到位置 $i$ 时，同步处理所有 $R = i$ 的查询。
 \end{enumerate}
 
-\subsection*{维护以 $i$ 为右端点的 GCD 列表}
+\subsubsection*{维护以 $i$ 为右端点的 GCD 列表}
 当遍历到位置 $i$ 时，按以下步骤维护当前的 GCD 列表：
 \begin{enumerate}
     \item 初始化临时列表 $\mathrm{cur}$，先加入 $(a_i, i)$（对应子数组 $[i, i]$，其 GCD 为 $a_i$）。
@@ -853,7 +998,7 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
     \item 合并 $\mathrm{cur}$ 中相同的 GCD 值：对相同的 $g'$，仅保留最小的左端点 $l$（因为更小的 $l$ 对应覆盖范围更广的子数组）。合并后的列表作为新的 $\mathrm{prev}$，用于处理 $i+1$。
 \end{enumerate}
 
-\subsection*{利用树状数组维护不同 GCD 的计数}
+\subsubsection*{利用树状数组维护不同 GCD 的计数}
 为了快速查询区间 $[L, R]$ 内的不同 GCD 数量，我们使用树状数组维护标记信息：
 \begin{itemize}
     \item 定义数组 $\mathrm{las}[g]$，表示 GCD 值 $g$ 最后一次被标记的左端点位置，初始为 0。
@@ -866,7 +1011,7 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
     \item 此时，树状数组中区间 $[L, R]$ 的和即为查询 $[L, R]$ 的答案：每个 GCD 值仅被标记一次，且仅当标记位置 $l \in [L, R]$ 时被计数。
 \end{itemize}
 
-\section*{复杂度分析}
+\subsubsection*{复杂度分析}
 \begin{itemize}
     \item \textbf{时间复杂度：}
     \begin{itemize}
@@ -897,10 +1042,10 @@ n+1,    & n \bmod 4 = 2 \\
 \subsection{高阶差分下等差求通项}
 给定：
 \begin{itemize}
-\item 阶数 \(k\)
-\item 第 \(k\) 阶差分为常数 \(d\)（即“k阶公差”为 \(d\)，同时“第k阶差分初值”也为 \(d\)）
+\item 阶数 $k$
+\item 第 $k$ 阶差分为常数 $d$（即“k阶公差”为 $d$，同时“第k阶差分初值”也为 $d$）
 \end{itemize}
-则原数列的第 \(n\) 项为：
+则原数列的第 $n$ 项为：
 
 \[
 \boxed{
@@ -912,7 +1057,7 @@ a_n = d \cdot \binom{n+k-1}{k}
 
 \subsection{曼哈顿距离与切比雪夫距离的相互转化}
 
-\section*{曼哈顿距离转切比雪夫距离}
+\subsubsection*{曼哈顿距离转切比雪夫距离}
 设原坐标系下两点坐标为 $(x_1, y_1)$ 和 $(x_2, y_2)$。定义变换：
 \[
 u = x + y,\qquad v = x - y
@@ -923,7 +1068,7 @@ u = x + y,\qquad v = x - y
 \]
 因此，处理最大曼哈顿距离问题时，只需在新坐标系下维护 $u$ 和 $v$ 的 $\min/\max$ 值，即可 $\mathcal{O}(1)$ 得到结果。
 
-\section*{切比雪夫距离转曼哈顿距离}
+\subsubsection*{切比雪夫距离转曼哈顿距离}
 设切比雪夫坐标系下两点坐标为 $(u_1, v_1)$ 和 $(u_2, v_2)$。定义逆变换：
 \[
 x = \frac{u + v}{2},\qquad y = \frac{u - v}{2}
@@ -935,13 +1080,13 @@ x = \frac{u + v}{2},\qquad y = \frac{u - v}{2}
 注意：若原坐标为整数，则 $u$ 与 $v$ 同奇偶，上式中的除法结果仍为整数或半整数，但距离公式依然成立。实际编程时可先全部乘以 $2$ 避免浮点数。
 
 \subsection{判定可重集合是否相等}
-\section*{定义}
+\subsubsection*{定义}
 \textbf{可重集合（Multiset）}：是指允许同一元素出现多次的集合。
 
-\section*{问题描述}
+\subsubsection*{问题描述}
 给定数组 $a$，多次询问：判断区间 $[L_1,R_1]$ 与 $[L_2,R_2]$ 所对应的可重集合是否相等。设每次询问的两个可重集合分别为 $S$ 和 $T$。
 
-\section*{朴素做法}
+\subsubsection*{朴素做法}
 直接的做法包括：
 \begin{itemize}
     \item 将两个区间内的元素排序逐一比较。
@@ -949,18 +1094,18 @@ x = \frac{u + v}{2},\qquad y = \frac{u - v}{2}
 \end{itemize}
 设 $|S|\le|T|$，单次询问时间复杂度为 $\mathcal{O}(|S|\cdot\log|S|)$。
 
-\section*{随机化做法（随机赋权哈希）}
-\subsection*{定理}
+\subsubsection*{随机化做法（随机赋权哈希）}
+\subsubsection*{定理}
 如果两个可重集合相等，那么两个集合的元素和相等。但仅靠元素和无法判定，反例：$S=\{2,4\},\ T=\{3,3\}$。
 
-\subsection*{改进思路}
+\subsubsection*{改进思路}
 为每一种元素 $x$ 随机赋予一个权值 $w(x)$，定义集合的哈希值为：
 \[
 H(S)=\sum_{x\in S} w(x)
 \]
 判断两个集合是否相等，只需比较 $H(S)$ 和 $H(T)$。
 
-\subsection*{正确性分析}
+\subsubsection*{正确性分析}
 \begin{itemize}
     \item 若 $S=T$，则 $H(S)=H(T)$。
     \item 若 $S\neq T$，设 $cnt_S(x),cnt_T(x)$ 分别表示元素 $x$ 在集合中的出现次数，则
@@ -970,16 +1115,16 @@ H(S)=\sum_{x\in S} w(x)
     这是一个关于随机变量 $w(x)$ 的线性组合。在 $w(x)$ 独立随机且值域足够大的情况下，上式成立的概率极低。
 \end{itemize}
 
-\subsection*{其他哈希形式}
+\subsubsection*{其他哈希形式}
 也可以定义 $H(S)=\prod_{x\in S} w(x)$，同样可用于判定可重集合相等（本质仍为随机映射）。
 
-\subsection*{区间查询实现}
+\subsubsection*{区间查询实现}
 \begin{itemize}
     \item 不带修：使用前缀和维护，单次查询 $\mathcal{O}(1)$。
     \item 待修：使用树状数组/线段树维护区间和，单次查询 $\mathcal{O}(\log n)$。
 \end{itemize}
 
-\section*{扩展问题}
+\subsubsection*{扩展问题}
 给定数组 $a$，多次询问：判断区间 $[L_1,R_1]$ 中所有元素加上 $k$ 后，是否与区间 $[L_2,R_2]$ 的可重集合相等。
 
 设常数 $B$，定义哈希函数：

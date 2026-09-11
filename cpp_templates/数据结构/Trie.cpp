@@ -1,3 +1,4 @@
+// 字典树：统计每个前缀被多少个串经过；用法见正文。
 struct Trie{
     vector<int>cnt;
     vector< array<int,65> >son;
@@ -30,4 +31,4 @@ struct Trie{
         }
         return cnt[p];
     }
-}trie;
+};

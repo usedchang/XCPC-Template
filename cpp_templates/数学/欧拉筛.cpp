@@ -1,7 +1,8 @@
+// 线性筛：一次求出素数表与欧拉函数；用法见正文。
 const int N=1e6+5;
 int p[N],vis[N],cnt;
 int phi[N];
-void init(){
+void init(int n){
     phi[1]=1;
     for(int i=2;i<=n;i++){
         if(!vis[i]){
