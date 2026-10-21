@@ -6,12 +6,12 @@ using i128 = __int128_t;
 struct Point {
     i64 x, y;
 
-    bool operator<(const Point &other) const {
-        return tie(x, y) < tie(other.x, other.y);
+    bool operator<(const Point &o) const {
+        return tie(x, y) < tie(o.x, o.y);
     }
 
-    bool operator==(const Point &other) const {
-        return x == other.x && y == other.y;
+    bool operator==(const Point &o) const {
+        return x == o.x && y == o.y;
     }
 };
 
@@ -23,77 +23,77 @@ i128 cross(const Point &o, const Point &a, const Point &b) {
     return ax * by - ay * bx;
 }
 
-i128 distance_squared(const Point &a, const Point &b) {
+i128 dis2(const Point &a, const Point &b) {
     i128 dx = (i128)a.x - b.x;
     i128 dy = (i128)a.y - b.y;
     return dx * dx + dy * dy;
 }
 
-// Returns the convex hull counter-clockwise, without collinear inner points.
-vector<Point> convex_hull(vector<Point> points) {
-    sort(points.begin(), points.end());
-    points.erase(unique(points.begin(), points.end()), points.end());
-    if (points.size() <= 1) {
-        return points;
+// 逆时针凸包，去掉边上的中间共线点
+vector<Point> hull(vector<Point> p) {
+    sort(p.begin(), p.end());
+    p.erase(unique(p.begin(), p.end()), p.end());
+    if (p.size() <= 1) {
+        return p;
     }
 
-    vector<Point> hull(2 * points.size());
-    int size = 0;
-    for (const Point &p : points) {
-        while (size >= 2 && cross(hull[size - 2], hull[size - 1], p) <= 0) {
-            --size;
+    vector<Point> h(2 * p.size());
+    int sz = 0;
+    for (const Point &x : p) {
+        while (sz >= 2 && cross(h[sz - 2], h[sz - 1], x) <= 0) {
+            --sz;
         }
-        hull[size++] = p;
+        h[sz++] = x;
     }
-    int lower_size = size;
-    for (int i = (int)points.size() - 2; i >= 0; --i) {
-        while (size > lower_size && cross(hull[size - 2], hull[size - 1], points[i]) <= 0) {
-            --size;
+    int lo = sz;
+    for (int i = (int)p.size() - 2; i >= 0; --i) {
+        while (sz > lo && cross(h[sz - 2], h[sz - 1], p[i]) <= 0) {
+            --sz;
         }
-        hull[size++] = points[i];
+        h[sz++] = p[i];
     }
-    hull.resize(size - 1);
-    return hull;
+    h.resize(sz - 1);
+    return h;
 }
 
-struct Diameter {
+struct Dia {
     Point a{}, b{};
-    i128 squared_distance = 0;
+    i128 d2 = 0;
 };
 
-Diameter convex_hull_diameter(vector<Point> points) {
-    vector<Point> hull = convex_hull(move(points));
-    int n = hull.size();
+Dia diameter(vector<Point> p) {
+    vector<Point> h = hull(move(p));
+    int n = h.size();
     if (n <= 1) {
-        return {hull.empty() ? Point{} : hull[0], hull.empty() ? Point{} : hull[0], 0};
+        return {h.empty() ? Point{} : h[0], h.empty() ? Point{} : h[0], 0};
     }
 
-    Diameter answer{hull[0], hull[1], distance_squared(hull[0], hull[1])};
-    auto update = [&](int i, int j) {
-        i128 d = distance_squared(hull[i], hull[j]);
-        if (d > answer.squared_distance) {
-            answer = {hull[i], hull[j], d};
+    Dia ans{h[0], h[1], dis2(h[0], h[1])};
+    auto upd = [&](int i, int j) {
+        i128 d = dis2(h[i], h[j]);
+        if (d > ans.d2) {
+            ans = {h[i], h[j], d};
         }
     };
     if (n == 2) {
-        return answer;
+        return ans;
     }
 
     int j = 1;
     for (int i = 0; i < n; ++i) {
-        int next_i = (i + 1) % n;
+        int ni = (i + 1) % n;
         auto area = [&](int k) {
-            return cross(hull[i], hull[next_i], hull[k]);
+            return cross(h[i], h[ni], h[k]);
         };
         while (area((j + 1) % n) > area(j)) {
             j = (j + 1) % n;
         }
-        update(i, j);
-        update(next_i, j);
+        upd(i, j);
+        upd(ni, j);
         if (area((j + 1) % n) == area(j)) {
-            update(i, (j + 1) % n);
-            update(next_i, (j + 1) % n);
+            upd(i, (j + 1) % n);
+            upd(ni, (j + 1) % n);
         }
     }
-    return answer;
+    return ans;
 }

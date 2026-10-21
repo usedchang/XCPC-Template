@@ -26,7 +26,7 @@ void init(int n) {
 }
 
 // 曲棍球棒：sum C(i,r) = C(n+1,r+1)
-ll hockey(int n, int r) {
+ll hock(int n, int r) {
     ll s = 0;
     for (int i = r; i <= n; ++i)
         s = (s + C[i][r]) % MOD;
@@ -34,7 +34,7 @@ ll hockey(int n, int r) {
 }
 
 // 范德蒙德：sum C(a,k)C(b,n-k) = C(a+b,n)
-ll vandermonde(int a, int b, int n) {
+ll vander(int a, int b, int n) {
     ll s = 0;
     int lo = max(0, n - b);
     int hi = min(a, n);
@@ -45,7 +45,7 @@ ll vandermonde(int a, int b, int n) {
 }
 
 // x 的 k 次下降幂：x(x-1)...(x-k+1)
-ll falling(ll x, int k) {
+ll fall(ll x, int k) {
     x %= MOD;
     if (x < 0) x += MOD;
     ll r = 1;
@@ -55,7 +55,7 @@ ll falling(ll x, int k) {
     return r;
 }
 
-ll power(ll a, ll e) {
+ll pw(ll a, ll e) {
     ll r = 1;
     a %= MOD;
     while (e) {
@@ -68,17 +68,17 @@ ll power(ll a, ll e) {
 
 int main() {
     init(1000);
-    assert(hockey(10, 3) == C[11][4]);
-    ll v = vandermonde(5, 7, 4);
+    assert(hock(10, 3) == C[11][4]);
+    ll v = vander(5, 7, 4);
     assert(v == C[12][4]);
     for (int n = 0; n <= 50; ++n)
         for (int r = 0; r <= n; ++r)
-            assert(hockey(n, r)
+            assert(hock(n, r)
                    == C[n + 1][r + 1]);
     for (int a = 0; a <= 30; ++a)
         for (int b = 0; b <= 30; ++b)
             for (int n = 0; n <= a + b; ++n) {
-                assert(vandermonde(a, b, n)
+                assert(vander(a, b, n)
                        == C[a + b][n]);
             }
 
@@ -87,9 +87,9 @@ int main() {
         ll rhs = 0;
         for (int k = 0; k <= 20; ++k) {
             rhs = (rhs + S2[20][k]
-                   * falling(x, k)) % MOD;
+                   * fall(x, k)) % MOD;
         }
-        assert(rhs == power(x, 20));
+        assert(rhs == pw(x, 20));
     }
     cout << "ok\n";
     return 0;

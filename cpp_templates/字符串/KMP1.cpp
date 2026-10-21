@@ -1,8 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-// pi[i] is the length of the longest proper prefix of s[0..i] that is also a suffix.
-vector<int> prefix_function(string_view s) {
+// pi[i] 是最长真前缀且同时是 s[0..i] 后缀的长度。
+vector<int> Kmp(string_view s) {
     vector<int> pi(s.size());
     for (int i = 1; i < (int)s.size(); ++i) {
         int j = pi[i - 1];

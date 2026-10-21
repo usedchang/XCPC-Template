@@ -27,7 +27,7 @@ ll inv(ll a, ll m) {
 
 // 解 ax ≡ b (mod m)。无解返回 false；
 // 有解返回最小非负特解 x，通解为 x + k*(m/gcd(a,m))
-bool linear_congruence(ll a, ll b, ll m, ll &x) {
+bool lineq(ll a, ll b, ll m, ll &x) {
     if (m < 0) m = -m;
     a %= m;
     if (a < 0) a += m;
@@ -56,7 +56,7 @@ int main() {
         } else {                       // ax=b (mod m)
             ll a, b, m, x;
             cin >> a >> b >> m;
-            if (linear_congruence(a, b, m, x))
+            if (lineq(a, b, m, x))
                 cout << x << '\n';
             else
                 cout << "No\n";

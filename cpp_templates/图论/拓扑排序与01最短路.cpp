@@ -1,61 +1,61 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-// Kahn's algorithm. Returns {is_dag, one_topological_order}.
-pair<bool, vector<int>> topological_sort(const vector<vector<int>> &graph) {
-    int n = graph.size();
-    vector<int> indegree(n);
+// Kahn 拓扑排序：返回 {是否 DAG, 一个拓扑序}
+pair<bool, vector<int>> topo(const vector<vector<int>> &g) {
+    int n = g.size();
+    vector<int> deg(n);
     for (int u = 0; u < n; ++u) {
-        for (int v : graph[u]) {
-            ++indegree[v];
+        for (int v : g[u]) {
+            ++deg[v];
         }
     }
 
     queue<int> q;
     for (int u = 0; u < n; ++u) {
-        if (indegree[u] == 0) {
+        if (deg[u] == 0) {
             q.push(u);
         }
     }
 
-    vector<int> order;
+    vector<int> ord;
     while (!q.empty()) {
         int u = q.front();
         q.pop();
-        order.push_back(u);
-        for (int v : graph[u]) {
-            if (--indegree[v] == 0) {
+        ord.push_back(u);
+        for (int v : g[u]) {
+            if (--deg[v] == 0) {
                 q.push(v);
             }
         }
     }
-    return {(int)order.size() == n, move(order)};
+    return {(int)ord.size() == n, move(ord)};
 }
 
-// Edges must have weight 0 or 1. The graph is an adjacency list of (to, weight).
-vector<int> zero_one_bfs(const vector<vector<pair<int, int>>> &graph, int source) {
-    constexpr int inf = numeric_limits<int>::max() / 2;
-    int n = graph.size();
-    vector<int> dist(n, inf);
+// 边权只有 0/1 的单源最短路
+vector<int> bfs01(const vector<vector<pair<int, int>>> &g, int s) {
+    constexpr int INF = numeric_limits<int>::max() / 2;
+    int n = g.size();
+    vector<int> dis(n, INF);
     deque<int> q;
-    dist[source] = 0;
-    q.push_front(source);
+    dis[s] = 0;
+    q.push_front(s);
 
     while (!q.empty()) {
         int u = q.front();
         q.pop_front();
-        for (auto [v, weight] : graph[u]) {
-            assert(weight == 0 || weight == 1);
-            if (dist[v] <= dist[u] + weight) {
+        for (auto [v, w] : g[u]) {
+            assert(w == 0 || w == 1);
+            if (dis[v] <= dis[u] + w) {
                 continue;
             }
-            dist[v] = dist[u] + weight;
-            if (weight == 0) {
+            dis[v] = dis[u] + w;
+            if (w == 0) {
                 q.push_front(v);
             } else {
                 q.push_back(v);
             }
         }
     }
-    return dist;
+    return dis;
 }

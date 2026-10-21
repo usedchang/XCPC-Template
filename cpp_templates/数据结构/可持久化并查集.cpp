@@ -16,16 +16,16 @@ void build(int &p, int l, int r) {
     build(rs[p], mid + 1, r);
 }
 /* 把位置 pos 的 (fa, dep) 改成 (nf, nd)，返回新根 */
-void modify(int &p, int pre, int l, int r, int pos, int nf, int nd) {
+void mod(int &p, int pre, int l, int r, int pos, int nf, int nd) {
     p = ++tot;
     ls[p] = ls[pre];
     rs[p] = rs[pre];
     if (l == r) { fa[p] = nf; dep[p] = nd; return; }
     int mid = (l + r) >> 1;
-    if (pos <= mid) modify(ls[p], ls[pre], l, mid, pos, nf, nd);
-    else            modify(rs[p], rs[pre], mid + 1, r, pos, nf, nd);
+    if (pos <= mid) mod(ls[p], ls[pre], l, mid, pos, nf, nd);
+    else            mod(rs[p], rs[pre], mid + 1, r, pos, nf, nd);
 }
-int queryFa(int p, int l, int r, int pos) {
+int qfa(int p, int l, int r, int pos) {
     while (l < r) {
         int mid = (l + r) >> 1;
         if (pos <= mid) { p = ls[p]; r = mid; }
@@ -33,7 +33,7 @@ int queryFa(int p, int l, int r, int pos) {
     }
     return fa[p];
 }
-int queryDep(int p, int l, int r, int pos) {
+int qdep(int p, int l, int r, int pos) {
     while (l < r) {
         int mid = (l + r) >> 1;
         if (pos <= mid) { p = ls[p]; r = mid; }
@@ -42,8 +42,8 @@ int queryDep(int p, int l, int r, int pos) {
     return dep[p];
 }
 int find(int rt, int x) {                 // 不压缩路径，按秩合并保证 O(log n) 层
-    int f = queryFa(rt, 1, n, x);
-    while (f != x) { x = f; f = queryFa(rt, 1, n, x); }
+    int f = qfa(rt, 1, n, x);
+    while (f != x) { x = f; f = qfa(rt, 1, n, x); }
     return x;
 }
 
@@ -58,13 +58,13 @@ int main() {
             scanf("%d %d", &a, &b);
             int ra = find(root[i - 1], a), rb = find(root[i - 1], b);
             if (ra == rb) { root[i] = root[i - 1]; continue; }
-            int da = queryDep(root[i - 1], 1, n, ra), db = queryDep(root[i - 1], 1, n, rb);
+            int da = qdep(root[i - 1], 1, n, ra), db = qdep(root[i - 1], 1, n, rb);
             if (da < db) { swap(ra, rb); swap(da, db); }   // 让 ra 的秩不小于 rb
             int t;
-            modify(t, root[i - 1], 1, n, rb, ra, db);      // rb 的父亲改成 ra
+            mod(t, root[i - 1], 1, n, rb, ra, db);      // rb 的父亲改成 ra
             if (da == db) {                                // 秩相同：ra 的秩 +1
                 int t2;
-                modify(t2, t, 1, n, ra, ra, da + 1);
+                mod(t2, t, 1, n, ra, ra, da + 1);
                 root[i] = t2;
             } else {
                 root[i] = t;

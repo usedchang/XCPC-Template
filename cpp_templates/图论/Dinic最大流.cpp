@@ -3,96 +3,96 @@ using namespace std;
 using i64 = long long;
 
 struct Dinic {
-    struct Edge {
+    struct E {
         int to, rev;
         i64 cap;
     };
 
     int n;
-    vector<vector<Edge>> graph;
-    vector<int> level, current;
+    vector<vector<E>> g;
+    vector<int> lv, it;
 
-    explicit Dinic(int n) : n(n), graph(n), level(n), current(n) {}
+    explicit Dinic(int n) : n(n), g(n), lv(n), it(n) {}
 
-    void add_edge(int u, int v, i64 cap) {
-        int forward = graph[u].size();
-        int reverse = graph[v].size() + (u == v);
-        graph[u].push_back({v, reverse, cap});
-        graph[v].push_back({u, forward, 0});
+    void add(int u, int v, i64 c) {
+        int fu = g[u].size();
+        int fv = g[v].size() + (u == v);
+        g[u].push_back({v, fv, c});
+        g[v].push_back({u, fu, 0});
     }
 
-    bool bfs(int source, int sink) {
-        fill(level.begin(), level.end(), -1);
+    bool bfs(int s, int t) {
+        fill(lv.begin(), lv.end(), -1);
         queue<int> q;
-        level[source] = 0;
-        q.push(source);
+        lv[s] = 0;
+        q.push(s);
         while (!q.empty()) {
             int u = q.front();
             q.pop();
-            for (const auto &e : graph[u]) {
-                if (e.cap > 0 && level[e.to] == -1) {
-                    level[e.to] = level[u] + 1;
+            for (const auto &e : g[u]) {
+                if (e.cap > 0 && lv[e.to] == -1) {
+                    lv[e.to] = lv[u] + 1;
                     q.push(e.to);
                 }
             }
         }
-        return level[sink] != -1;
+        return lv[t] != -1;
     }
 
-    i64 dfs(int u, int sink, i64 flow) {
-        if (u == sink || flow == 0) {
-            return flow;
+    i64 dfs(int u, int t, i64 f) {
+        if (u == t || f == 0) {
+            return f;
         }
-        for (int &i = current[u]; i < (int)graph[u].size(); ++i) {
-            Edge &e = graph[u][i];
-            if (e.cap == 0 || level[e.to] != level[u] + 1) {
+        for (int &i = it[u]; i < (int)g[u].size(); ++i) {
+            E &e = g[u][i];
+            if (e.cap == 0 || lv[e.to] != lv[u] + 1) {
                 continue;
             }
-            i64 pushed = dfs(e.to, sink, min(flow, e.cap));
-            if (pushed == 0) {
+            i64 d = dfs(e.to, t, min(f, e.cap));
+            if (d == 0) {
                 continue;
             }
-            e.cap -= pushed;
-            graph[e.to][e.rev].cap += pushed;
-            return pushed;
+            e.cap -= d;
+            g[e.to][e.rev].cap += d;
+            return d;
         }
         return 0;
     }
 
-    i64 max_flow(int source, int sink,
-                 i64 limit = numeric_limits<i64>::max()) {
-        if (source == sink || limit <= 0) {
+    i64 flow(int s, int t, i64 lim = numeric_limits<i64>::max()) {
+        if (s == t || lim <= 0) {
             return 0;
         }
-        i64 flow = 0;
-        while (flow < limit && bfs(source, sink)) {
-            fill(current.begin(), current.end(), 0);
-            while (flow < limit) {
-                i64 pushed = dfs(source, sink, limit - flow);
-                if (pushed == 0) {
+        i64 f = 0;
+        while (f < lim && bfs(s, t)) {
+            fill(it.begin(), it.end(), 0);
+            while (f < lim) {
+                i64 d = dfs(s, t, lim - f);
+                if (d == 0) {
                     break;
                 }
-                flow += pushed;
+                f += d;
             }
         }
-        return flow;
+        return f;
     }
 
-    vector<bool> min_cut_side(int source) const {
-        vector<bool> seen(n);
+    // 残量网络中从 s 可达的一侧
+    vector<bool> cut(int s) const {
+        vector<bool> vis(n);
         queue<int> q;
-        seen[source] = true;
-        q.push(source);
+        vis[s] = true;
+        q.push(s);
         while (!q.empty()) {
             int u = q.front();
             q.pop();
-            for (const auto &e : graph[u]) {
-                if (e.cap > 0 && !seen[e.to]) {
-                    seen[e.to] = true;
+            for (const auto &e : g[u]) {
+                if (e.cap > 0 && !vis[e.to]) {
+                    vis[e.to] = true;
                     q.push(e.to);
                 }
             }
         }
-        return seen;
+        return vis;
     }
 };

@@ -1,8 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-// z[i] is the LCP length of s and s.substr(i); z[0] is set to |s|.
-vector<int> z_function(string_view s) {
+// z[i] 是 s 与 s.substr(i) 的 LCP 长度；z[0]=|s|。
+vector<int> zf(string_view s) {
     int n = s.size();
     vector<int> z(n);
     if (n == 0) {

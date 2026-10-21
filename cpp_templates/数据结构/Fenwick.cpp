@@ -1,86 +1,85 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-// 0-indexed point updates and half-open range sums [l, r).
+// 0-indexed 单点加、半开区间 [l,r) 求和
 template <class T>
-struct Fenwick {
+struct BIT {
     int n;
-    vector<T> bit;
+    vector<T> tr;
 
-    explicit Fenwick(int n = 0) : n(n), bit(n + 1, T{}) {}
+    explicit BIT(int n = 0) : n(n), tr(n + 1, T{}) {}
 
-    void add(int i, T delta) {
+    void add(int i, T v) {
         for (++i; i <= n; i += i & -i) {
-            bit[i] += delta;
+            tr[i] += v;
         }
     }
 
-    // Sum of a[0..r).
-    T prefix_sum(int r) const {
-        T result{};
+    T sum(int r) const {
+        T res{};
         for (; r > 0; r -= r & -r) {
-            result += bit[r];
+            res += tr[r];
         }
-        return result;
+        return res;
     }
 
-    T range_sum(int l, int r) const {
-        return prefix_sum(r) - prefix_sum(l);
+    T query(int l, int r) const {
+        return sum(r) - sum(l);
     }
 };
 
-// Range add and range sum on a 0-indexed array, using two Fenwick trees.
+// 0-indexed 区间加、区间和
 template <class T>
-struct FenwickRangeSum {
+struct BITR {
     int n;
-    Fenwick<T> slope, intercept;
+    BIT<T> d, c;
 
-    explicit FenwickRangeSum(int n = 0) : n(n), slope(n + 1), intercept(n + 1) {}
+    explicit BITR(int n = 0) : n(n), d(n + 1), c(n + 1) {}
 
-    void range_add(int l, int r, T delta) {
-        slope.add(l, delta);
-        slope.add(r, -delta);
-        intercept.add(l, delta * l);
-        intercept.add(r, -delta * r);
+    void add(int l, int r, T v) {
+        d.add(l, v);
+        d.add(r, -v);
+        c.add(l, v * l);
+        c.add(r, -v * r);
     }
 
-    T prefix_sum(int r) const {
-        return slope.prefix_sum(r) * r - intercept.prefix_sum(r);
+    T sum(int r) const {
+        return d.sum(r) * r - c.sum(r);
     }
 
-    T range_sum(int l, int r) const {
-        return prefix_sum(r) - prefix_sum(l);
+    T query(int l, int r) const {
+        return sum(r) - sum(l);
     }
 };
 
-// 0-indexed point updates and half-open rectangle sums [x1, x2) x [y1, y2).
+// 0-indexed 二维单点加、半开矩形 [x1,x2) x [y1,y2) 求和
 template <class T>
-struct Fenwick2D {
+struct BIT2D {
     int n, m;
-    vector<vector<T>> bit;
+    vector<vector<T>> tr;
 
-    Fenwick2D(int n, int m) : n(n), m(m), bit(n + 1, vector<T>(m + 1, T{})) {}
+    BIT2D(int n, int m) : n(n), m(m), tr(n + 1, vector<T>(m + 1, T{})) {}
 
-    void add(int x, int y, T delta) {
+    void add(int x, int y, T v) {
         for (int i = x + 1; i <= n; i += i & -i) {
             for (int j = y + 1; j <= m; j += j & -j) {
-                bit[i][j] += delta;
+                tr[i][j] += v;
             }
         }
     }
 
-    T prefix_sum(int x, int y) const {
-        T result{};
+    T sum(int x, int y) const {
+        T res{};
         for (int i = x; i > 0; i -= i & -i) {
             for (int j = y; j > 0; j -= j & -j) {
-                result += bit[i][j];
+                res += tr[i][j];
             }
         }
-        return result;
+        return res;
     }
 
-    T rectangle_sum(int x1, int y1, int x2, int y2) const {
-        return prefix_sum(x2, y2) - prefix_sum(x1, y2)
-             - prefix_sum(x2, y1) + prefix_sum(x1, y1);
+    T query(int x1, int y1, int x2, int y2) const {
+        return sum(x2, y2) - sum(x1, y2)
+             - sum(x2, y1) + sum(x1, y1);
     }
 };

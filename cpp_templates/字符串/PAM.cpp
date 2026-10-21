@@ -2,86 +2,86 @@
 using namespace std;
 using i64 = long long;
 
-struct PalindromicTree {
+struct PAM {
     struct Node {
         int len = 0;
-        int link = 0;
-        int suffix_count = 0;
-        i64 occurrences = 0;
-        array<int, 26> next;
+        int fail = 0;
+        int num = 0;       // 以该节点结尾的回文后缀个数
+        i64 cnt = 0;       // 出现次数
+        array<int, 26> ch;
 
         Node() {
-            next.fill(-1);
+            ch.fill(-1);
         }
     };
 
-    vector<Node> nodes;
-    string text;
+    vector<Node> tr;
+    string s;
     int last;
 
-    PalindromicTree() {
-        nodes.resize(2);
-        nodes[0].len = -1;  // Odd root.
-        nodes[0].link = 0;
-        nodes[1].len = 0;   // Even root.
-        nodes[1].link = 0;
+    PAM() {
+        tr.resize(2);
+        tr[0].len = -1;    // 奇根
+        tr[0].fail = 0;
+        tr[1].len = 0;     // 偶根
+        tr[1].fail = 0;
         last = 1;
     }
 
-    int get_link(int v, int pos, char c) const {
-        while (pos - 1 - nodes[v].len < 0 || text[pos - 1 - nodes[v].len] != c) {
-            v = nodes[v].link;
+    int getfail(int u, int pos, char c) const {
+        while (pos - 1 - tr[u].len < 0 || s[pos - 1 - tr[u].len] != c) {
+            u = tr[u].fail;
         }
-        return v;
+        return u;
     }
 
-    // Adds one lowercase character and returns the number of palindromic suffixes.
+    // 加入一个小写字符，返回当前前缀的回文后缀个数
     int add(char c) {
         int x = c - 'a';
         assert(0 <= x && x < 26);
-        text.push_back(c);
-        int pos = (int)text.size() - 1;
-        int p = get_link(last, pos, c);
+        s.push_back(c);
+        int pos = (int)s.size() - 1;
+        int p = getfail(last, pos, c);
 
-        if (nodes[p].next[x] == -1) {
-            int cur = nodes.size();
-            nodes.emplace_back();
-            nodes[cur].len = nodes[p].len + 2;
-            if (nodes[cur].len == 1) {
-                nodes[cur].link = 1;
+        if (tr[p].ch[x] == -1) {
+            int cur = tr.size();
+            tr.emplace_back();
+            tr[cur].len = tr[p].len + 2;
+            if (tr[cur].len == 1) {
+                tr[cur].fail = 1;
             } else {
-                int q = get_link(nodes[p].link, pos, c);
-                nodes[cur].link = nodes[q].next[x];
+                int q = getfail(tr[p].fail, pos, c);
+                tr[cur].fail = tr[q].ch[x];
             }
-            nodes[cur].suffix_count = 1 + nodes[nodes[cur].link].suffix_count;
-            nodes[p].next[x] = cur;
+            tr[cur].num = 1 + tr[tr[cur].fail].num;
+            tr[p].ch[x] = cur;
         }
 
-        last = nodes[p].next[x];
-        ++nodes[last].occurrences;
-        return nodes[last].suffix_count;
+        last = tr[p].ch[x];
+        ++tr[last].cnt;
+        return tr[last].num;
     }
 
-    int distinct_count() const {
-        return (int)nodes.size() - 2;
+    int size() const {
+        return (int)tr.size() - 2;
     }
 
-    // Returns occurrence counts for nodes 0..nodes.size()-1; roots have count 0.
-    vector<i64> occurrence_counts() const {
-        vector<int> order(nodes.size());
-        iota(order.begin(), order.end(), 0);
-        sort(order.begin(), order.end(), [&](int a, int b) {
-            return nodes[a].len > nodes[b].len;
+    // 沿 fail 边汇总每个节点的出现次数；两个根的下标为 0/1
+    vector<i64> counts() const {
+        vector<int> ord(tr.size());
+        iota(ord.begin(), ord.end(), 0);
+        sort(ord.begin(), ord.end(), [&](int a, int b) {
+            return tr[a].len > tr[b].len;
         });
-        vector<i64> count(nodes.size());
-        for (int v = 0; v < (int)nodes.size(); ++v) {
-            count[v] = nodes[v].occurrences;
+        vector<i64> cnt(tr.size());
+        for (int i = 0; i < (int)tr.size(); ++i) {
+            cnt[i] = tr[i].cnt;
         }
-        for (int v : order) {
-            if (v >= 2) {
-                count[nodes[v].link] += count[v];
+        for (int u : ord) {
+            if (u >= 2) {
+                cnt[tr[u].fail] += cnt[u];
             }
         }
-        return count;
+        return cnt;
     }
 };

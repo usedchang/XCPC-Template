@@ -2,79 +2,77 @@
 using namespace std;
 using i64 = long long;
 
-struct MinCostMaxFlow {
-    struct Edge {
+struct MCMF {
+    struct E {
         int to, rev;
         i64 cap, cost;
     };
 
     int n;
-    vector<vector<Edge>> graph;
+    vector<vector<E>> g;
 
-    explicit MinCostMaxFlow(int n) : n(n), graph(n) {}
+    explicit MCMF(int n) : n(n), g(n) {}
 
-    void add_edge(int u, int v, i64 cap, i64 cost) {
-        int forward = graph[u].size();
-        int reverse = graph[v].size() + (u == v);
-        graph[u].push_back({v, reverse, cap, cost});
-        graph[v].push_back({u, forward, 0, -cost});
+    void add(int u, int v, i64 cap, i64 cost) {
+        int fu = g[u].size();
+        int fv = g[v].size() + (u == v);
+        g[u].push_back({v, fv, cap, cost});
+        g[v].push_back({u, fu, 0, -cost});
     }
 
-    // Finds a maximum flow and, among them, one with minimum total cost.
-    // Requires that no reachable negative-cost cycle exists in the residual graph.
-    pair<i64, i64> min_cost_max_flow(int source, int sink,
-                                     i64 flow_limit = numeric_limits<i64>::max()) {
-        if (source == sink || flow_limit <= 0) {
+    // 最大流中的最小费用；要求残量网络无源点可达负环
+    pair<i64, i64> flow(int s, int t, i64 lim = numeric_limits<i64>::max()) {
+        if (s == t || lim <= 0) {
             return {0, 0};
         }
-        constexpr i64 inf = numeric_limits<i64>::max() / 4;
-        i64 flow = 0, cost = 0;
-        vector<i64> dist(n);
-        vector<int> parent_vertex(n), parent_edge(n);
-        vector<bool> in_queue(n);
+        constexpr i64 INF = numeric_limits<i64>::max() / 4;
+        i64 f = 0, c = 0;
+        vector<i64> dis(n);
+        vector<int> pv(n), pe(n);
+        vector<bool> inq(n);
 
-        while (flow < flow_limit) {
-            fill(dist.begin(), dist.end(), inf);
-            fill(in_queue.begin(), in_queue.end(), false);
+        while (f < lim) {
+            fill(dis.begin(), dis.end(), INF);
+            fill(inq.begin(), inq.end(), false);
             queue<int> q;
-            dist[source] = 0;
-            q.push(source);
-            in_queue[source] = true;
+            dis[s] = 0;
+            q.push(s);
+            inq[s] = true;
 
             while (!q.empty()) {
                 int u = q.front();
                 q.pop();
-                in_queue[u] = false;
-                for (int i = 0; i < (int)graph[u].size(); ++i) {
-                    const Edge &e = graph[u][i];
-                    if (e.cap == 0 || dist[e.to] <= dist[u] + e.cost) {
+                inq[u] = false;
+                for (int i = 0; i < (int)g[u].size(); ++i) {
+                    const E &e = g[u][i];
+                    if (e.cap == 0 || dis[e.to] <= dis[u] + e.cost) {
                         continue;
                     }
-                    dist[e.to] = dist[u] + e.cost;
-                    parent_vertex[e.to] = u;
-                    parent_edge[e.to] = i;
-                    if (!in_queue[e.to]) {
-                        in_queue[e.to] = true;
+                    dis[e.to] = dis[u] + e.cost;
+                    pv[e.to] = u;
+                    pe[e.to] = i;
+                    if (!inq[e.to]) {
+                        inq[e.to] = true;
                         q.push(e.to);
                     }
                 }
             }
 
-            if (dist[sink] == inf) {
+            if (dis[t] == INF) {
                 break;
             }
-            i64 pushed = flow_limit - flow;
-            for (int v = sink; v != source; v = parent_vertex[v]) {
-                pushed = min(pushed, graph[parent_vertex[v]][parent_edge[v]].cap);
+            i64 d = lim - f;
+            for (int v = t; v != s; v = pv[v]) {
+                d = min(d, g[pv[v]][pe[v]].cap);
             }
-            for (int v = sink; v != source; v = parent_vertex[v]) {
-                Edge &e = graph[parent_vertex[v]][parent_edge[v]];
-                e.cap -= pushed;
-                graph[v][e.rev].cap += pushed;
+            for (int v = t; v != s; v = pv[v]) {
+                E &e = g[pv[v]][pe[v]];
+                e.cap -= d;
+                g[v][e.rev].cap += d;
             }
-            flow += pushed;
-            cost += pushed * dist[sink];
+            f += d;
+            c += d * dis[t];
         }
-        return {flow, cost};
+        return {f, c};
     }
 };

@@ -10,7 +10,7 @@ struct PSeg {
     PSeg() { tr.push_back(Node()); }          // 0 号哨兵：孩子为 0，val/tag 为空元
     int newnode(Node o) { tr.push_back(o); return (int)tr.size() - 1; }   // 按值传入，扩容也不会失效
     /* 区间加：返回新版本的根，不动 pre 那一版 */
-    int updRange(int pre, int l, int r, int ql, int qr, Info d) {
+    int upd(int pre, int l, int r, int ql, int qr, Info d) {
         int u = newnode(tr[pre]);             // 写时复制
         if (ql <= l && r <= qr) {
             tr[u].val = tr[u].val + d * Info(r - l + 1);    // 整段覆盖：只改 val 与 tag
@@ -18,8 +18,8 @@ struct PSeg {
             return u;
         }
         int mid = (l + r) >> 1;
-        if (ql <= mid) tr[u].l = updRange(tr[pre].l, l, mid, ql, qr, d);
-        if (qr > mid)  tr[u].r = updRange(tr[pre].r, mid + 1, r, ql, qr, d);
+        if (ql <= mid) tr[u].l = upd(tr[pre].l, l, mid, ql, qr, d);
+        if (qr > mid)  tr[u].r = upd(tr[pre].r, mid + 1, r, ql, qr, d);
         // 标记永久化：本节点区间和 = 左右孩子和 + 本节点 tag × 区间长度
         tr[u].val = tr[tr[u].l].val + tr[tr[u].r].val + tr[u].tag * Info(r - l + 1);
         return u;
@@ -69,7 +69,7 @@ int main() {
             ll d;
             if (c == 'C') {
                 cin >> l >> r >> d;
-                root = seg.updRange(root, 1, n, l, r, d);
+                root = seg.upd(root, 1, n, l, r, d);
                 his.push_back(root);
             } else if (c == 'Q') {
                 cin >> l >> r;

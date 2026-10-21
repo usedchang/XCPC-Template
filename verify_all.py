@@ -41,98 +41,98 @@ CPP_CONTEXTS = {
 
 CPP_SMOKE = r"""
 int main() {
-    assert((prefix_function("ababaca") == vector<int>{0, 0, 1, 2, 3, 0, 1}));
-    assert((kmp_search("aaaaa", "aaa") == vector<int>{0, 1, 2}));
-    assert((z_function("aaaa") == vector<int>{4, 3, 2, 1}));
+    assert((Kmp("ababaca") == vector<int>{0, 0, 1, 2, 3, 0, 1}));
+    assert((kmp("aaaaa", "aaa") == vector<int>{0, 1, 2}));
+    assert((zf("aaaa") == vector<int>{4, 3, 2, 1}));
 
     Manacher manacher("abacaba");
-    assert(manacher.longest_length() == 7);
-    assert(manacher.is_palindrome(1, 6));
-    assert(!manacher.is_palindrome(0, 4));
+    assert(manacher.maxlen() == 7);
+    assert(manacher.check(1, 6));
+    assert(!manacher.check(0, 4));
 
-    RollingHash hash("abcabc");
+    Hash hash("abcabc");
     assert(hash.get(0, 3) == hash.get(3, 6));
 
-    AhoCorasick ac;
-    ac.add_pattern("he");
-    ac.add_pattern("she");
-    ac.add_pattern("hers");
-    ac.add_pattern("his");
+    AC ac;
+    ac.add("he");
+    ac.add("she");
+    ac.add("hers");
+    ac.add("his");
     ac.build();
-    assert((ac.count_matches("ushers") == vector<i64>{1, 1, 1, 0}));
+    assert((ac.query("ushers") == vector<i64>{1, 1, 1, 0}));
 
-    PalindromicTree pam;
+    PAM pam;
     int suffix_count = 0;
     for (char c : string("ababa")) {
         suffix_count = pam.add(c);
     }
     assert(suffix_count == 3);
-    assert(pam.distinct_count() == 5);
-    auto pal_occurrences = pam.occurrence_counts();
+    assert(pam.size() == 5);
+    auto pal_occurrences = pam.counts();
     assert(accumulate(pal_occurrences.begin() + 2, pal_occurrences.end(), 0LL) == 9);
 
-    vector<int> sa = suffix_array("banana");
+    vector<int> sa = SA("banana");
     assert((sa == vector<int>{5, 3, 1, 0, 4, 2}));
-    assert((lcp_array("banana", sa) == vector<int>{0, 1, 3, 0, 0, 2}));
+    assert((LCP("banana", sa) == vector<int>{0, 1, 3, 0, 0, 2}));
 
-    SuffixAutomaton sam;
+    SAM sam;
     sam.build("ababa");
-    assert(sam.contains("bab"));
-    assert(!sam.contains("baa"));
-    assert(sam.distinct_substrings() == 9);
-    assert(sam.occurrence_counts()[0] == 5);
+    assert(sam.find("bab"));
+    assert(!sam.find("baa"));
+    assert(sam.distinct() == 9);
+    assert(sam.counts()[0] == 5);
 
-    Fenwick<long long> fw(5);
+    BIT<long long> fw(5);
     fw.add(1, 2);
     fw.add(2, 3);
-    assert(fw.range_sum(0, 5) == 5);
-    assert(fw.range_sum(2, 3) == 3);
+    assert(fw.query(0, 5) == 5);
+    assert(fw.query(2, 3) == 3);
 
-    FenwickRangeSum<long long> range_fw(5);
-    range_fw.range_add(1, 4, 2);
-    range_fw.range_add(2, 3, 3);
-    assert(range_fw.range_sum(0, 5) == 9);
-    assert(range_fw.range_sum(2, 4) == 7);
+    BITR<long long> range_fw(5);
+    range_fw.add(1, 4, 2);
+    range_fw.add(2, 3, 3);
+    assert(range_fw.query(0, 5) == 9);
+    assert(range_fw.query(2, 4) == 7);
 
-    Fenwick2D<long long> fw2d(3, 3);
+    BIT2D<long long> fw2d(3, 3);
     fw2d.add(0, 0, 2);
     fw2d.add(1, 2, 3);
     fw2d.add(2, 2, -1);
-    assert(fw2d.rectangle_sum(0, 0, 2, 3) == 5);
-    assert(fw2d.rectangle_sum(2, 2, 3, 3) == -1);
+    assert(fw2d.query(0, 0, 2, 3) == 5);
+    assert(fw2d.query(2, 2, 3, 3) == -1);
 
     vector<vector<int>> dag{{1, 2}, {2}, {}};
-    auto [is_dag, order] = topological_sort(dag);
+    auto [is_dag, order] = topo(dag);
     assert(is_dag && order.size() == 3);
     vector<int> position(3);
     for (int i = 0; i < 3; ++i) position[order[i]] = i;
     assert(position[0] < position[1] && position[1] < position[2]);
     vector<vector<int>> cyclic{{1}, {0}};
-    assert(!topological_sort(cyclic).first);
+    assert(!topo(cyclic).first);
 
     vector<vector<pair<int, int>>> zero_one_graph(4);
     zero_one_graph[0] = {{1, 1}, {2, 0}};
     zero_one_graph[2] = {{1, 0}};
     zero_one_graph[1] = {{3, 1}};
-    assert((zero_one_bfs(zero_one_graph, 0) == vector<int>{0, 0, 0, 1}));
+    assert((bfs01(zero_one_graph, 0) == vector<int>{0, 0, 0, 1}));
 
     Dinic dinic(4);
-    dinic.add_edge(0, 1, 3);
-    dinic.add_edge(0, 2, 2);
-    dinic.add_edge(1, 2, 1);
-    dinic.add_edge(1, 3, 2);
-    dinic.add_edge(2, 3, 3);
-    assert(dinic.max_flow(0, 3) == 5);
+    dinic.add(0, 1, 3);
+    dinic.add(0, 2, 2);
+    dinic.add(1, 2, 1);
+    dinic.add(1, 3, 2);
+    dinic.add(2, 3, 3);
+    assert(dinic.flow(0, 3) == 5);
 
-    MinCostMaxFlow mcmf(4);
-    mcmf.add_edge(0, 1, 1, 1);
-    mcmf.add_edge(0, 1, 1, 2);
-    mcmf.add_edge(1, 3, 2, 3);
-    assert((mcmf.min_cost_max_flow(0, 3) == pair<i64, i64>{2, 9}));
+    MCMF mcmf(4);
+    mcmf.add(0, 1, 1, 1);
+    mcmf.add(0, 1, 1, 2);
+    mcmf.add(1, 3, 2, 3);
+    assert((mcmf.flow(0, 3) == pair<i64, i64>{2, 9}));
 
     vector<Point> points{{0, 0}, {1, 0}, {1, 1}, {0, 1}, {0, 0}, {0, 0}};
-    assert(convex_hull(points).size() == 4);
-    assert(convex_hull_diameter(points).squared_distance == 2);
+    assert(hull(points).size() == 4);
+    assert(diameter(points).d2 == 2);
 }
 """
 
@@ -299,7 +299,7 @@ def run_smoke_checks(compiler: str, standard: str) -> None:
         run = subprocess.run([str(executable)], text=True, capture_output=True)
         if run.returncode != 0:
             fail(f"algorithm smoke tests failed (exit {run.returncode}):\n{run.stdout}{run.stderr}")
-    print("[PASS] Algorithm smoke checks: strings, Fenwick, graph flow, and convex hull", flush=True)
+    print("[PASS] Algorithm smoke checks: strings, BIT, graph flow, and convex hull", flush=True)
 
 
 def run_regression_checks(compiler: str, standard: str) -> None:

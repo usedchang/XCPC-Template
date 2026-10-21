@@ -182,8 +182,8 @@ pbds 的 PATRICIA trie（\texttt{pat\_trie\_tag} 配 \texttt{trie\_prefix\_searc
 \lstinputlisting[caption={ST表}, breakatwhitespace=false]{cpp_templates/数据结构/ST表.cpp}
 
 \subsection{树状数组}
-所有下标均从 $0$ 开始，区间按左闭右开 $[l,r)$ 表示。\texttt{Fenwick<T>} 支持单点加与区间和，
-\texttt{FenwickRangeSum<T>} 支持区间加与区间和，\texttt{Fenwick2D<T>} 支持二维单点加与矩形和；
+所有下标均从 $0$ 开始，区间按左闭右开 $[l,r)$ 表示。\texttt{BIT<T>} 支持单点加与区间和，
+\texttt{BITR<T>} 支持区间加与区间和，\texttt{BIT2D<T>} 支持二维单点加与矩形和；
 一维操作为 $O(\log n)$，二维操作为 $O(\log n\log m)$。
 \lstinputlisting[caption={一维、区间更新与二维树状数组}]{cpp_templates/数据结构/Fenwick.cpp}
 
@@ -223,7 +223,7 @@ pbds 的 PATRICIA trie（\texttt{pat\_trie\_tag} 配 \texttt{trie\_prefix\_searc
 \begin{itemize}
     \item \texttt{int root = seg.build(1, n, A);}——$A$ 是 1-indexed 数组，
           返回版本 $0$ 的根；
-    \item \texttt{root = seg.updRange(root, 1, n, l, r, d);}——区间 $[l,r]$ 每个数加 $d$，
+    \item \texttt{root = seg.upd(root, 1, n, l, r, d);}——区间 $[l,r]$ 每个数加 $d$，
           返回新版本的根，旧版本不受影响；
     \item \texttt{seg.sum(root, 1, n, l, r);}——当前版本的区间和；
     \item \texttt{seg.sum(his[t], 1, n, l, r);}——历史版本 $t$ 的区间和，
@@ -471,7 +471,7 @@ KM 算法（匈牙利算法的带权版）：左部 $n$ 个点、右部 $m$ 个�
 \lstinputlisting[caption={二分图最大权匹配(KM)}]{cpp_templates/图论/KM最大权匹配.cpp}
 
 \subsection{最大流与最小费用最大流}
-Dinic 支持有向边非负容量，\texttt{min\_cut\_side(s)} 返回残量网络中从源点可达的一侧。
+Dinic 支持有向边非负容量，\texttt{cut(s)} 返回残量网络中从源点可达的一侧。
 最小费用最大流用 SPFA 找增广路，支持负费用边；要求残量网络中不存在从源点可达的负费用环，
 最坏复杂度较高，单位容量场景尤其要留意增广次数。
 \lstinputlisting[caption={Dinic 通用最大流}]{cpp_templates/图论/Dinic最大流.cpp}
@@ -498,13 +498,13 @@ Dinic 支持有向边非负容量，\texttt{min\_cut\_side(s)} 返回残量网�
 \lstinputlisting[caption={双模数区间字符串哈希}]{cpp_templates/字符串/字符串哈希.cpp}
 
 \subsection{AC自动机}
-先对所有非空小写模式串调用 \texttt{add\_pattern}，再调用 \texttt{build}；
-\texttt{count\_matches(text)} 按加入顺序返回每个模式串在文本中的出现次数，重复模式串会分别返回。
+先对所有非空小写模式串调用 \texttt{add}，再调用 \texttt{build}；
+\texttt{query(text)} 按加入顺序返回每个模式串在文本中的出现次数，重复模式串会分别返回。
 构建复杂度 $O(26V)$，单次统计为 $O(|text|+V+P)$，其中 $V$ 是自动机节点数、$P$ 是模式串数。
 \lstinputlisting[caption={Aho-Corasick 多模式匹配}]{cpp_templates/字符串/AC自动机.cpp}
 
 \subsection{KMP}
-\texttt{prefix\_function} 返回前缀函数；\texttt{kmp\_search} 返回模式串在文本中的所有 $0$ 起始位置。
+\texttt{Kmp} 返回前缀函数；\texttt{kmp} 返回模式串在文本中的所有 $0$ 起始位置。
 \lstinputlisting[caption={KMP1}]{cpp_templates/字符串/KMP1.cpp}
 
 \lstinputlisting[caption={KMP2}]{cpp_templates/字符串/KMP2.cpp}
@@ -514,17 +514,17 @@ Dinic 支持有向边非负容量，\texttt{min\_cut\_side(s)} 返回残量网�
 \lstinputlisting[caption={Z函数}]{cpp_templates/字符串/Z函数.cpp}
 
 \subsection{Manacher(马拉车)}
-奇偶半径分别存于 \texttt{odd} 和 \texttt{even}；\texttt{is\_palindrome(l,r)} 判断左闭右开区间。
+奇偶半径分别存于 \texttt{od} 和 \texttt{ev}；\texttt{check(l,r)} 判断左闭右开区间。
 \lstinputlisting[caption={最长回文子串与区间回文查询}]{cpp_templates/字符串/最长回文子串.cpp}
 
 \subsection{回文自动机(PAM)}
 在线加入小写字符，\texttt{add(c)} 返回当前前缀的回文后缀个数；节点数减去两个根的数量，
-即本质不同回文子串数。\texttt{occurrence\_counts()} 沿失配边汇总每个节点代表的回文串出现次数。
+即本质不同回文子串数。\texttt{counts()} 沿失配边汇总每个节点代表的回文串出现次数。
 \lstinputlisting[caption={PAM(回文自动机)}]{cpp_templates/字符串/PAM.cpp}
 
 \subsection{后缀数组与 LCP}
-\texttt{suffix\_array} 返回按字典序排列的后缀起点（$0$ 起始）；\texttt{lcp\_array[i]} 是排序后第
-$i-1$ 与第 $i$ 个后缀的 LCP，\texttt{lcp\_array[0]=0}。构造后缀数组 $O(n\log n)$，LCP 为 $O(n)$。
+\texttt{SA} 返回按字典序排列的后缀起点（$0$ 起始）；\texttt{LCP[i]} 是排序后第
+$i-1$ 与第 $i$ 个后缀的 LCP，\texttt{LCP[0]=0}。构造后缀数组 $O(n\log n)$，LCP 为 $O(n)$。
 \lstinputlisting[caption={倍增后缀数组与 Kasai LCP}]{cpp_templates/字符串/后缀数组.cpp}
 
 \subsection{后缀自动机}
@@ -859,7 +859,7 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
 \subsection{exgcd 求逆元与线性同余}
 \texttt{exgcd(a,b,x,y)} 返回 $d=\gcd(a,b)$，并给出一组 $ax+by=d$ 的解。
 \texttt{inv(a,m)} 在 $\gcd(a,m)=1$ 时返回 $[0,m)$ 内的逆元；不互质时模板用 \texttt{assert} 拦截。
-\texttt{linear\_congruence(a,b,m,x)} 解 $ax\equiv b\pmod m$：无解返回 \texttt{false}，
+\texttt{lineq(a,b,m,x)} 解 $ax\equiv b\pmod m$：无解返回 \texttt{false}，
 有解返回最小非负特解 $x$，通解为 $x+k\cdot m/\gcd(a,m)$。三者均为 $O(\log m)$。
 \lstinputlisting[caption={exgcd 求逆元与线性同余}, breakatwhitespace=false]{cpp_templates/数学/exgcd求逆元.cpp}
 
