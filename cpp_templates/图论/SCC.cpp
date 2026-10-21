@@ -49,7 +49,6 @@ struct SCC{
         }
         ng.assign(cnt,{});
         sz.assign(cnt,0);
-        in.assign(cnt,0);
         for(int u=1;u<=n;u++){
             sz[scc[u]]++;
             for(int v:g[u]){

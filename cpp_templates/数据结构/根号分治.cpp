@@ -31,7 +31,7 @@ void solve(){
         }
         else{
             ll ans=0;
-            if(pos[x].size()<=pos[y].size()||pos[x].size()<=siz&&pos[y].size()<=siz){
+            if(pos[x].size()<=pos[y].size()){
                 for(int &p:pos[x]){
                     ans+=pos[y].end()-upper_bound(pos[y].begin(),pos[y].end(),p);
                 }

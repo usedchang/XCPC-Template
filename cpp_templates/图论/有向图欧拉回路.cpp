@@ -35,7 +35,6 @@ void solve(){
         return;
     }
     vector<int>res;
-    vector<char>vis(m+1);
     for(int i=1;i<=n;i++) sort(G[i].begin(),G[i].end());
     auto dfs=[&](auto &&dfs,int u) ->void {
         while(nxt[u]<G[u].size()){

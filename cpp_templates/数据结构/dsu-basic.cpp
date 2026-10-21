@@ -3,9 +3,9 @@ struct DSU{
     vector<int>siz;
     DSU(){};
     DSU(int n){
-        f.resize(n+1);
+        f.resize(n+2);          // n+1 作为 nxt 的哨兵
         iota(f.begin(),f.end(),0);
-        siz.assign(n+1,1);
+        siz.assign(n+2,1);
     }
     int find(int x){
         return x==f[x]?x:f[x]=find(f[x]);
@@ -18,14 +18,11 @@ struct DSU{
         return true;
     }
     int nxt(int l,int r){
-        ll res=0;
+        int res=0;
         l=find(l);
-        int fl=l;
         while(l<=r){
             ++res;
-            fl=find(l+1);
-            f[l]=fl;
-            l=fl;
+            l=f[l]=find(l+1);
         }
         return res;
     }//l需要多少步跳到r？模拟链表的模式删除l-r所有中转点

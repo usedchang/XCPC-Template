@@ -5,8 +5,6 @@ using namespace std;
 typedef long long ll;
 struct ZTrie{
     vector<array<int,2>>son;
-    vector<int>cnt;
-    int idx=0;
     ZTrie(int n){
         son.reserve(n+1);
         son.push_back({0,0});   // 动态开点，节点数不再受固定上界限制

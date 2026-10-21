@@ -11,7 +11,6 @@ struct DSU {
         f.resize(n);
         siz.assign(n, 1);
         iota(f.begin(), f.end(), 0);
-        st.clear();
     }
     int find(int x) const {
         while (f[x] != x) x = f[x];

@@ -14,7 +14,7 @@ bool spfa(){
     fill(cnt,cnt+n+1,0);
     queue<int>Q;
     Q.push(0);
-    inq[0]=0;
+    inq[0]=1;
     cnt[0]=1;
     while(!Q.empty()){
         int u=Q.front();

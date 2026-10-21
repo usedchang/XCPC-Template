@@ -22,7 +22,6 @@ void solve(){
         ll s=(x-y)/d;
         ll mod=abs(l/d);
         X*=s;
-        Y*=s;
         cout<<(X%mod+mod)%mod<<endl;
     }
 }

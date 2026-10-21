@@ -312,6 +312,8 @@ def run_regression_checks(compiler: str, standard: str) -> None:
          ["0", "1500000000", "3000000000"], "Dijkstra (dist > INT_MAX)"),
         ("cpp_templates/图论/KM最大权匹配.cpp",
          "2 2 1\n1 1 5\n", ["5", "1", "0"], "KM (no perfect matching)"),
+        ("cpp_templates/图论/二分图最大匹配.cpp",
+         "2 2 3\n1 1\n1 2\n2 1\n", ["2"], "bipartite matching (vis reset)"),
         ("cpp_templates/数据结构/可持久化并查集.cpp",
          "5 6\n1 1 2\n1 2 3\n3 1 3\n2 1\n3 1 3\n3 1 1\n",
          ["1", "0", "1"], "persistent DSU (versions)"),

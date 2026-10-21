@@ -23,6 +23,7 @@ int main(){
     }
     ll ans=0;
     for(int i=1;i<=n;i++) {
+        // 每轮增广前清空右部标记
         fill(vis+1,vis+1+m,false);
         ans+=dfs(i);
     }

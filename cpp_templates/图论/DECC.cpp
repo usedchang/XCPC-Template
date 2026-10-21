@@ -40,7 +40,7 @@ struct DECC{
                 st.pop();
                 tmp.push_back(y);
             }while(y!=u);
-            if(!tmp.empty()) B.push_back(tmp);
+            B.push_back(tmp);
         }
     }
 };
