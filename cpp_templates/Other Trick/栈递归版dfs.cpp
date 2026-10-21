@@ -5,7 +5,8 @@ int x,y;
 void solve() {
     int n; cin>>n;
     vector<ll>a(n+1),f(n+1),dp(n+1);
-    vector<Statu>st(n+1);
+    vector<Statu>st;
+    st.reserve(n);
     vector<int>siz(n+1);
     vector<vector<int>>G(n+1);
     for(int i=1;i<=n;i++) cin>>a[i];

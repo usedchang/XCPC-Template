@@ -32,9 +32,9 @@ struct DSU{
     }
 };
 void solve(){
-    int n;cin>>n;
-    DSU dsu(n+1);
-    for(int i=1;i<=n;i++){
+    int T;cin>>T;
+    DSU dsu(30000);   // P1196 的飞船编号固定为 1..30000，T 只是操作数
+    for(int i=1;i<=T;i++){
         char c;int x,y;cin>>c>>x>>y;
         if(c=='M') dsu.merge(x,y);
         else{

@@ -27,6 +27,10 @@ void solve(){
         return -1;
     };
     int s=find();
+    if(s==-1){
+        cout<<"No"<<endl;
+        return;
+    }
     vector<int>nxt(n+1),vis(m+1),res;
     for(int i=1;i<=n;i++) sort(G[i].begin(),G[i].end());
     auto dfs=[&](auto &&dfs,int u) ->void {

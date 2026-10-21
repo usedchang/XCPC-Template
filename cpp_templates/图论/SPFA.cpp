@@ -6,7 +6,8 @@ ll dis[N];
 bool inq[N];
 int n,m,s;
 void spfa(int s){
-    fill(dis+1,dis+1+n,INT_MAX);
+    fill(dis+1,dis+1+n,(ll)4e18);
+    fill(inq+1,inq+1+n,false);
     queue<int>Q;
     Q.push(s);
     dis[s]=0;

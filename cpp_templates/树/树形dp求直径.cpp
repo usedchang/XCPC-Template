@@ -7,6 +7,7 @@ int main(){
     int n;cin>>n;
     vector<vector<int>>G(n+1);
     vector<int>down(n+1),up(n+1);
+    down[0] = -1;   // 空儿子深度为 -1
     for(int i=1;i<n;i++){
         int x,y;cin>>x>>y;
         G[x].emplace_back(y);
@@ -30,8 +31,8 @@ int main(){
         for(int v:G[u]){
             if(v==fa) continue;
             up[v]=up[u]+1;
-            if(m1!=0&&down[m1]!=down[v]) up[v]=max(up[v],down[m1]+2);
-            else if(down[m2]!=0) up[v]=max(up[v],down[m2]+2);
+            if(m1!=0&&m1!=v) up[v]=max(up[v],down[m1]+2);
+            else if(m2!=0) up[v]=max(up[v],down[m2]+2);
             dfs2(dfs2,v,u);
         }
     };

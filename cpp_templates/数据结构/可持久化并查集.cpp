@@ -59,7 +59,7 @@ int main() {
             int ra = find(root[i - 1], a), rb = find(root[i - 1], b);
             if (ra == rb) { root[i] = root[i - 1]; continue; }
             int da = queryDep(root[i - 1], 1, n, ra), db = queryDep(root[i - 1], 1, n, rb);
-            if (da > db) { swap(ra, rb); swap(da, db); }   // 让 ra 的秩不小于 rb
+            if (da < db) { swap(ra, rb); swap(da, db); }   // 让 ra 的秩不小于 rb
             int t;
             modify(t, root[i - 1], 1, n, rb, ra, db);      // rb 的父亲改成 ra
             if (da == db) {                                // 秩相同：ra 的秩 +1

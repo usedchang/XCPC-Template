@@ -1,43 +1,69 @@
-//P2398 GCD-SUM
-#include<bits/stdc++.h>
+// P2257 YY的GCD：求 1<=x<=N, 1<=y<=M 且 gcd(x,y) 为质数的有序对数量。
+// 多组询问，T<=1e4，N,M<=1e7；线性筛 + 预处理 f(T) 前缀和 + 整除分块。
+#include <bits/stdc++.h>
 using namespace std;
-#define endl '\n'
 typedef long long ll;
-const int N=1e5+5;
-ll p[N],vis[N],cnt;
-ll mu[N],pre[N],phi[N];
-void init(int n){
-    mu[1]=phi[1]=1;
-    for(int i=2;i<=n;i++){
-        if(!vis[i]){
-            p[cnt++]=i;
-            mu[i]=-1;
-            phi[i]=i-1;
+
+const int MAXN = 10000000;
+signed char mu[MAXN + 1];   // 莫比乌斯函数，取值 -1/0/1
+int f[MAXN + 1];            // f(T) = sum_{p|T, p prime} mu(T/p)
+int pre[MAXN + 1];          // f 的前缀和
+vector<int> primes;
+bitset<MAXN + 1> composite;
+
+void init(int n) {
+    mu[1] = 1;
+    for (int i = 2; i <= n; ++i) {
+        if (!composite[i]) {
+            primes.push_back(i);
+            mu[i] = -1;
         }
-        for(int j=0;i*p[j]<=n;j++){
-            int m=i*p[j];
-            vis[m]=1;
-            if(i%p[j]==0){
-                mu[m]=0;
-                phi[m]=phi[i]*p[j];
+        for (int p : primes) {
+            if (1LL * i * p > n) break;
+            composite[i * p] = 1;
+            if (i % p == 0) {
+                mu[i * p] = 0;
                 break;
             }
-            phi[m]=phi[i]*(p[j]-1);
-            mu[m]=-mu[i];
+            mu[i * p] = -mu[i];
         }
     }
-    for(int i=1;i<=n;i++) pre[i]=pre[i-1]+phi[i];
-}
-int main(){
-    cin.tie(0)->ios::sync_with_stdio(false);
-    ll ans=0;
-    ll n;cin>>n;
-    init(n+5);
-    for(int l=1,r;l<=n;l=r+1){
-        ll v=n/l;
-        r=n/v;
-        ans+=v*v*(pre[r]-pre[l-1]);
+    // 计算 f(T)
+    for (int p : primes) {
+        for (int t = p; t <= n; t += p) {
+            f[t] += mu[t / p];
+        }
     }
-    cout<<ans<<endl;
+    for (int i = 1; i <= n; ++i) {
+        pre[i] = pre[i - 1] + f[i];
+    }
+}
+
+ll solve(int n, int m) {
+    if (n > m) swap(n, m);
+    ll ans = 0;
+    for (int l = 1, r; l <= n; l = r + 1) {
+        r = min(n / (n / l), m / (m / l));
+        ans += 1LL * (n / l) * (m / l)
+             * (pre[r] - pre[l - 1]);
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin >> T;
+    vector<pair<int, int>> qs(T);
+    int max_n = 1;
+    for (auto &[n, m] : qs) {
+        cin >> n >> m;
+        max_n = max({max_n, n, m});
+    }
+    init(max_n);
+    for (auto [n, m] : qs) {
+        cout << solve(n, m) << '\n';
+    }
     return 0;
 }

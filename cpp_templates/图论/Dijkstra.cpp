@@ -14,7 +14,8 @@ bool vis[N];
 ll dis[N];
 int n,m,s;
 void Dijkstra(int s){
-    fill(dis+1,dis+1+n,INT_MAX);
+    fill(dis+1,dis+1+n,(ll)4e18);
+    fill(vis+1,vis+1+n,false);
     priority_queue<node>Q;
     dis[s]=0;
     Q.push({s,0});

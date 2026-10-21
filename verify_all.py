@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit every template, syntax-check C++ sources, run smoke checks, and build the PDF."""
+"""Audit every template, syntax-check C++ sources, run smoke and regression checks, and build the PDF."""
 
 from __future__ import annotations
 
@@ -302,6 +302,46 @@ def run_smoke_checks(compiler: str, standard: str) -> None:
     print("[PASS] Algorithm smoke checks: strings, Fenwick, graph flow, and convex hull", flush=True)
 
 
+def run_regression_checks(compiler: str, standard: str) -> None:
+    # Small end-to-end checks for bugs that pure syntax checking cannot see.
+    cases = [
+        ("cpp_templates/树/树形dp求直径.cpp",
+         "3\n1 2\n1 3\n", ["2"], "tree diameter (star)"),
+        ("cpp_templates/图论/Dijkstra.cpp",
+         "3 2 1\n1 2 1500000000\n2 3 1500000000\n",
+         ["0", "1500000000", "3000000000"], "Dijkstra (dist > INT_MAX)"),
+        ("cpp_templates/图论/KM最大权匹配.cpp",
+         "2 2 1\n1 1 5\n", ["5", "1", "0"], "KM (no perfect matching)"),
+        ("cpp_templates/数据结构/可持久化并查集.cpp",
+         "5 6\n1 1 2\n1 2 3\n3 1 3\n2 1\n3 1 3\n3 1 1\n",
+         ["1", "0", "1"], "persistent DSU (versions)"),
+        ("cpp_templates/数学/莫比乌斯反演.cpp",
+         "2\n10 10\n100 100\n", ["30", "2791"], "Mobius inversion (P2257)"),
+    ]
+    for name, stdin, expected, label in cases:
+        source = compiler_source(ROOT / name)
+        with tempfile.TemporaryDirectory(prefix="xcpc-regression-") as temp:
+            temp_dir = Path(temp)
+            executable = temp_dir / ("case.exe" if os.name == "nt" else "case")
+            command = [compiler, f"-std={standard}", "-O2", "-x", "c++", "-o", str(executable), "-"]
+            build = subprocess.run(
+                command, input=source, text=True, encoding="utf-8",
+                errors="replace", capture_output=True,
+            )
+            if build.returncode != 0:
+                fail(f"regression build failed for {name}:\n{build.stderr.strip()}")
+            run = subprocess.run(
+                [str(executable)], input=stdin, text=True,
+                encoding="utf-8", errors="replace", capture_output=True, timeout=60,
+            )
+            if run.returncode != 0:
+                fail(f"regression run failed for {name} (exit {run.returncode}):\n{run.stderr.strip()}")
+            actual = run.stdout.split()
+            if actual != expected:
+                fail(f"regression mismatch for {label} ({name}): expected {expected}, got {actual}")
+    print(f"[PASS] Regression checks: {len(cases)} end-to-end cases", flush=True)
+
+
 def build_pdf() -> None:
     latexmk = shutil.which("latexmk")
     if not latexmk:
@@ -346,9 +386,10 @@ def main() -> int:
         print(f"[PASS] Template catalog: {len(sources)} files, {len(references)} LaTeX references, README counts match", flush=True)
         checked = check_cpp_sources(compiler, args.std, sources)
         run_smoke_checks(compiler, args.std)
+        run_regression_checks(compiler, args.std)
         if not args.skip_pdf:
             build_pdf()
-        print(f"[PASS] Full check complete: {checked} syntax checks and smoke checks passed", flush=True)
+        print(f"[PASS] Full check complete: {checked} syntax, smoke, and regression checks passed", flush=True)
         return 0
     except (OSError, RuntimeError, subprocess.SubprocessError) as error:
         print(f"[FAIL] {error}", file=sys.stderr)

@@ -24,8 +24,10 @@ ll inv(ll a,ll mod){
     return (x%mod+mod)%mod;
 }
 ll exBSGS(ll a,ll b,ll p){
-    if(b==1||p==1) return 0;
+    if(p==1) return 0;
     a%=p,b%=p;
+    if(b==1) return 0;          // x=0 时 a^0=1
+    if(a==0) return b==0?1:-1;  // 0^0=1，0^x=0
     ll cnt=0;
     ll d=gcd(a,p);
     while(d>1){

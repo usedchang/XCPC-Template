@@ -8,7 +8,10 @@ bool inq[N];
 ll dis[N];
 int n,m;
 bool spfa(){
-    fill(dis+1,dis+1+n,INT_MAX);
+    fill(dis+1,dis+1+n,(ll)4e18);
+    dis[0]=0;
+    fill(inq,inq+n+1,false);
+    fill(cnt,cnt+n+1,0);
     queue<int>Q;
     Q.push(0);
     inq[0]=0;

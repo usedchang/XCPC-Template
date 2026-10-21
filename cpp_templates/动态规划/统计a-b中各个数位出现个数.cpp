@@ -1,5 +1,5 @@
-ll dp[18][18][2][2];
-int digit[18],target;
+ll dp[20][20][2][2];
+int digit[20],target;
 ll dfs(int pos,int cnt,bool limit,bool lead){
     if(pos==-1) return cnt;
     if(dp[pos][cnt][limit][lead]!=-1) return dp[pos][cnt][limit][lead];

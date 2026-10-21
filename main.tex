@@ -537,6 +537,7 @@ $i-1$ 与第 $i$ 个后缀的 LCP，\texttt{lcp\_array[0]=0}。构造后缀数�
 \subsection{01背包}
 \lstinputlisting[caption={01背包}]{cpp_templates/动态规划/最朴素01背包.cpp}
 \lstinputlisting[caption={bitset优化可行01背包}]{cpp_templates/动态规划/bitset优化可行背包.cpp}
+bitset 版把容量上界固定为 $10000$，$w$ 更大时需要改模板里的 bitset 大小。
 
 \lstinputlisting[caption={双向搜索优化纯搜索}]{cpp_templates/动态规划/双向搜索优化大值域枚举.cpp}
 
@@ -610,10 +611,8 @@ $i-1$ 与第 $i$ 个后缀的 LCP，\texttt{lcp\_array[0]=0}。构造后缀数�
 
 \subsubsection*{限制条件}
 \begin{itemize}
-    \item $1 \leq N \leq 100$
-    \item $1 \leq W \leq 50000$
-    \item $1 \leq L_i \leq W$
-    \item $1 \leq C_i \leq 10000$
+    \item $1 \leq N \leq 2 \times 10^5$
+    \item $1 \leq A_i < 10^6$
     \item 所有输入均为整数
 \end{itemize}
 \lstinputlisting[caption={SOSdp解决数位不发生进位问题}, breakatwhitespace=false]{cpp_templates/动态规划/SOSdp解决数位不发生进位问题.cpp}
@@ -643,6 +642,7 @@ $i-1$ 与第 $i$ 个后缀的 LCP，\texttt{lcp\_array[0]=0}。构造后缀数�
 \subsection{第二类斯特林数}
 
 第二类斯特林数（斯特林子集数）$\begin{Bmatrix}n\\ k\end{Bmatrix}$，也可记做 $S(n,k)$，表示将 $n$ 个两两不同的元素划分为 $k$ 个互不区分的非空子集的方案数。
+代码把第二维固定为 $1000$，即要求 $n\le 10000$、$m\le 1000$；超出时自行扩大 \texttt{dp} 的第二维。
 
 \lstinputlisting[caption={Stirling 数}]{cpp_templates/数学/Stirling 数.cpp}
 

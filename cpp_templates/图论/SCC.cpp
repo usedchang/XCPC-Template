@@ -55,13 +55,17 @@ struct SCC{
             for(int v:g[u]){
                 if(scc[u]!=scc[v]){
                     ng[scc[u]].emplace_back(scc[v]);
-                    ++in[scc[v]];
                 }
             }
         }
         for(auto &e:ng){
             sort(e.begin(),e.end());
             e.erase(unique(e.begin(),e.end()),e.end());
+        }
+        // 去重后重新统计入度
+        in.assign(cnt,0);
+        for(int u=0;u<cnt;u++){
+            for(int v:ng[u]) ++in[v];
         }
     }
 };

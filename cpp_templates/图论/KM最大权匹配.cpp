@@ -60,6 +60,9 @@ int main() {
         w[u][v] = x;
     }
     km();
+    // 没有完美匹配时，KM 会用 NEG 占位；这些左部点应当输出 0（未匹配）
+    for (int j = 1; j <= m; ++j)
+        if (match[j] && w[match[j]][j] == NEG) match[j] = 0;
     ll ans = 0;
     for (int i = 1; i <= n; ++i) matchL[i] = 0;
     for (int j = 1; j <= m; ++j)

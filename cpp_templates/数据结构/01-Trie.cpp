@@ -8,14 +8,17 @@ struct ZTrie{
     vector<int>cnt;
     int idx=0;
     ZTrie(int n){
-        son.resize(n+1);
-        cnt.resize(n+1);
+        son.reserve(n+1);
+        son.push_back({0,0});   // 动态开点，节点数不再受固定上界限制
     }
     void insert(int x){
         int p=0;
         for(int i=31;i>=0;i--) {
             int bit=(x>>i&1);
-            if(!son[p][bit]) son[p][bit]=(++idx);
+            if(!son[p][bit]) {
+                son[p][bit]=(int)son.size();
+                son.push_back({0,0});
+            }
             p=son[p][bit];
         }
     }

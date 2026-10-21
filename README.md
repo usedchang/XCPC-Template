@@ -35,8 +35,9 @@ avatar-usedchang.png     # 封面头像
 ## 全量检查
 
 在仓库根目录运行 `python verify_all.py`。脚本核对所有 `.cpp` 与 LaTeX 引用、README 分类数量，
-用 `g++ -std=c++17` 检查可编译模板（按正文补入依赖上下文），运行新增算法的 smoke checks，
-最后用 `latexmk` 重建 `main.pdf`。需要 Python 3、g++ 和 TeX Live；三个编译命令示例文件按说明文档处理，不作为 C++ 编译。
+用 `g++ -std=c++17` 检查可编译模板（按正文补入依赖上下文），运行新增算法的 smoke checks 和
+少量端到端回归检查，最后用 `latexmk` 重建 `main.pdf`。需要 Python 3、g++ 和 TeX Live；
+三个编译命令示例文件按说明文档处理，不作为 C++ 编译。
 
 ## ➕ 新增一个模板
 

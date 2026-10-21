@@ -8,10 +8,11 @@ struct ST{
     vector<vector<ll>>mx,mn;
     ST(const vector<ll>&a){
         int n=a.size()-1;
-        mx=vector<vector<ll>>(n+1,vector<ll>(21,-INF));
-        mn=vector<vector<ll>>(n+1,vector<ll>(21,INF));
+        int LOG=n>0?__lg(n)+1:1;   // 列数按 n 的实际对数取，避免写越界
+        mx=vector<vector<ll>>(n+1,vector<ll>(LOG,-INF));
+        mn=vector<vector<ll>>(n+1,vector<ll>(LOG,INF));
         for(int i=1;i<=n;i++) mx[i][0]=mn[i][0]=a[i];
-        for(int i=1;i<=21;i++){
+        for(int i=1;i<LOG;i++){
             for(int j=1;j+(1<<i)-1<=n;j++){
                 mx[j][i]=(mx[j][i-1]>mx[j+(1<<i-1)][i-1])?mx[j][i-1]:mx[j+(1<<i-1)][i-1];
                 mn[j][i]=(mn[j][i-1]<mn[j+(1<<i-1)][i-1])?mn[j][i-1]:mn[j+(1<<i-1)][i-1];

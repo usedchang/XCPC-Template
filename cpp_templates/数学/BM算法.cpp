@@ -31,7 +31,7 @@ ll linearRecurrence(const vector<ll>& s, unsigned long long n){
     int k = rec.size();
     if(k==0) return 0;
     vector<ll> c(k);            // x^k = c[0]x^{k-1}+...+c[k-1]
-    for(int j=0;j<k;j++) c[j]=rec[k-1-j];
+    for(int j=0;j<k;j++) c[j]=rec[j];
     auto mul = [&](const vector<ll>& p, const vector<ll>& q){
         vector<ll> t(2*k,0);
         for(int i=0;i<k;i++) if(p[i]) for(int j=0;j<k;j++) if(q[j])

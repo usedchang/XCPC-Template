@@ -5,9 +5,9 @@ void solve(){
     vector<ll>dp(w+1,INF);
     dp[0]=0;
     for(int i=1;i<=n;i++){
-        int l,c;cin>>l>>c;
-        for(int k=1;c>0;k*=2){
-            ll cur=min(c,k);
+        int l; ll c;cin>>l>>c;
+        for(ll k=1;c>0;k*=2){
+            ll cur=min<ll>(c,k);
             for(int j=w;j>=1LL*cur*l;j--){
                 dp[j]=min(dp[j],dp[j-1LL*cur*l]+cur);
             }
