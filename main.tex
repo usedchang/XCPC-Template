@@ -828,6 +828,13 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
 \subsection{exgcd}
 \lstinputlisting[caption={exgcd}]{cpp_templates/数学/exgcd.cpp}
 
+\subsection{exgcd 求逆元与线性同余}
+\texttt{exgcd(a,b,x,y)} 返回 $d=\gcd(a,b)$，并给出一组 $ax+by=d$ 的解。
+\texttt{inv(a,m)} 在 $\gcd(a,m)=1$ 时返回 $[0,m)$ 内的逆元；不互质时模板用 \texttt{assert} 拦截。
+\texttt{linear\_congruence(a,b,m,x)} 解 $ax\equiv b\pmod m$：无解返回 \texttt{false}，
+有解返回最小非负特解 $x$，通解为 $x+k\cdot m/\gcd(a,m)$。三者均为 $O(\log m)$。
+\lstinputlisting[caption={exgcd 求逆元与线性同余}, breakatwhitespace=false]{cpp_templates/数学/exgcd求逆元.cpp}
+
 \subsection{exBSGS}
 \lstinputlisting[caption={exBSGS}]{cpp_templates/数学/exBSGS.cpp}
 

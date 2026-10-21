@@ -317,6 +317,8 @@ def run_regression_checks(compiler: str, standard: str) -> None:
          ["1", "0", "1"], "persistent DSU (versions)"),
         ("cpp_templates/数学/莫比乌斯反演.cpp",
          "2\n10 10\n100 100\n", ["30", "2791"], "Mobius inversion (P2257)"),
+        ("cpp_templates/数学/exgcd求逆元.cpp",
+         "3\n1 3 11\n2 4 8 10\n2 4 7 10\n", ["4", "2", "No"], "exgcd inverse/congruence"),
     ]
     for name, stdin, expected, label in cases:
         source = compiler_source(ROOT / name)
