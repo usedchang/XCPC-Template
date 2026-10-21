@@ -1,91 +1,67 @@
-const int N=1e4+5;
-vector<int>G[N];
-int w[N],new_w[N];
-vector<int>new_G[N];
 struct SCC{
-    vector<vector<int> >ans;
-    vector<int>dfn,low,mp;
-    vector<char>vis;
-    stack<int>st;
-    int cnt,n;
-    SCC(int n):n(n),cnt(0){
-        vis.resize(n+1);
-        dfn.resize(n+1);
-        low.resize(n+1);
-        mp.resize(n+1);
+    int n;
+    vector<vector<int>>g;
+    vector<vector<int>>ng;
+    vector<int>in;
+    vector<int>dfn,low,stk,scc;
+    vector<int>sz;
+    vector<bool>instk;
+    int idx,cnt,top;
+    SCC(int n_=0){
+        n=n_;
+        g.assign(n+1,{});
+        dfn.assign(n+1,0);
+        low.assign(n+1,0);
+        instk.assign(n+1,false);
+        scc.assign(n+1,-1);
+        stk.assign(n+1,0);
+        idx=cnt=top=0;
     }
-    void tarjan(int u){
-        low[u]=dfn[u]=(++cnt);
-        st.push(u);
-        vis[u]=1;
-        for(int v:G[u]){
+    void add(int u,int v){
+        g[u].emplace_back(v);
+    }
+    void dfs(int u){
+        dfn[u]=low[u]=(++idx);
+        stk[++top]=u;
+        instk[u]=true;
+        for(int v:g[u]){
             if(!dfn[v]){
-                tarjan(v);
+                dfs(v);
                 low[u]=min(low[u],low[v]);
             }
-            else if(vis[v]){
+            else if(instk[v]){
                 low[u]=min(low[u],dfn[v]);
             }
         }
-        if(dfn[u]==low[u]){
-            int y;
-            vector<int>tmp;
+        if(low[u]==dfn[u]){
+            int v;
             do{
-                y=st.top();
-                st.pop();
-                vis[y]=0;
-                tmp.push_back(y);
-                mp[y]=ans.size();
-            }while(u!=y);
-            if(!tmp.empty()) ans.push_back(tmp);
+                v=stk[top--];
+                instk[v]=false;
+                scc[v]=cnt;//编号从0开始
+            }while(v!=u);
+            cnt++;
+        }
+    }
+    void work(){
+        for(int i=1;i<=n;i++){
+            if(!dfn[i]) dfs(i);
+        }
+        ng.assign(cnt,{});
+        sz.assign(cnt,0);
+        in.assign(cnt,0);
+        for(int u=1;u<=n;u++){
+            sz[scc[u]]++;
+            for(int v:g[u]){
+                if(scc[u]!=scc[v]){
+                    ng[scc[u]].emplace_back(scc[v]);
+                    ++in[scc[v]];
+                }
+            }
+        }
+        for(auto &e:ng){
+            sort(e.begin(),e.end());
+            e.erase(unique(e.begin(),e.end()),e.end());
         }
     }
 };
-void solve(){
-    int n,m;
-    cin>>n>>m;
-    for(int i=1;i<=n;i++) cin>>w[i];
-    for(int i=1;i<=m;i++){
-        int x,y;cin>>x>>y;
-        G[x].push_back(y);
-    }
-    SCC scc(n+1);
-    for(int i=1;i<=n;i++){
-        if(!scc.dfn[i]) scc.tarjan(i);
-    }
-    for(int i=0;i<scc.ans.size();i++){
-        for(int v:scc.ans[i]){
-            new_w[i]+=w[v];
-        }
-    }
-    vector<int>in(scc.ans.size()),dp(scc.ans.size());
-    for(int i=1;i<=n;i++){
-        for(int v:G[i]){
-            if(scc.mp[v]!=scc.mp[i]) {
-                new_G[scc.mp[i]].push_back(scc.mp[v]);
-                ++in[scc.mp[v]];
-            }
-        }
-    }
-    queue<int>Q;
-    for(int i=0;i<scc.ans.size();i++){
-        if(!in[i]) {
-            Q.push(i);
-            dp[i]=new_w[i];
-        }
-    }
-    while(!Q.empty()){
-        int u=Q.front();
-        if(Q.size()>1){
-            cout<<"No"<<endl;
-            return;
-        }
-        Q.pop();
-        for(int v:new_G[u]){
-            if((--in[v])==0){
-                Q.push(v);
-            }
-        }
-    }
-    cout<<"Yes"<<endl;
-}

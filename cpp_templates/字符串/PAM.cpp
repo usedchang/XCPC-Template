@@ -1,68 +1,87 @@
-//Stop learning useless algorithms, go and solve some problems, learn how to use binary search.
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 using namespace std;
-#define endl '\n'
-typedef long long ll;
-const int N=5e5+5;
-struct PAM{
-    int tot,last,sz;    // tot:节点数,last:以当前位置结尾最长回文串节点 sz:当前串长
-    int len[N];         // len[i]:节点i代表的回文长度
-    int fail[N];        // fail[i]:节点i的最长回文后缀
-    int ch[N][26];      // ch[i][c]:回文串i两边加c得到的节点
-    int cnt[N];         // cnt[i]:节点i的出现次数
-    int num[N];         // num[i]:以该节点结尾的回文后缀个数
-    char s[N];          // 原串,下标从1开始,s[0]是哨兵
-    int newnode(int l) {
-        ++tot;
-        memset(ch[tot],0,sizeof ch[tot]);
-        len[tot]=l;
-        fail[tot]=cnt[tot]=num[tot]=0;
-        return tot;
-    }
-    PAM(){ init();}
-    void init() { //初始化两个根
-        tot=-1,last=0;sz=0; 
-        newnode(0);     //节点0:偶根,len=0
-        newnode(-1);    //节点1:奇根,len=-1
-        fail[0]=1;      //偶根的fail指向奇根
-        fail[1]=0;
-        s[0]=-1;        //哨兵
-    }
-    int get_fail(int x){
-        while(s[sz-len[x]-1]!=s[sz]) x=fail[x];
-        return x;
-    }
-    void insert(int c){
-        s[++sz]=c;
-        int p=get_fail(last);
-        if(!ch[p][c]){
-            int cur=newnode(len[p]+2);
-            fail[cur]=ch[get_fail(fail[p])][c];
-            ch[p][c]=cur;
-            num[cur]=num[fail[cur]]+1;
+using i64 = long long;
+
+struct PalindromicTree {
+    struct Node {
+        int len = 0;
+        int link = 0;
+        int suffix_count = 0;
+        i64 occurrences = 0;
+        array<int, 26> next;
+
+        Node() {
+            next.fill(-1);
         }
-        last=ch[p][c];
-        cnt[last]++;
+    };
+
+    vector<Node> nodes;
+    string text;
+    int last;
+
+    PalindromicTree() {
+        nodes.resize(2);
+        nodes[0].len = -1;  // Odd root.
+        nodes[0].link = 0;
+        nodes[1].len = 0;   // Even root.
+        nodes[1].link = 0;
+        last = 1;
     }
-    void insert(char c){ insert(c-'a');}
-    void count(){
-        for(int i=tot;i>=2;--i) cnt[fail[i]]+=cnt[i];
+
+    int get_link(int v, int pos, char c) const {
+        while (pos - 1 - nodes[v].len < 0 || text[pos - 1 - nodes[v].len] != c) {
+            v = nodes[v].link;
+        }
+        return v;
     }
-}pam;
-string s;
-void solve(){
-    cin>>s;
-    int k=0;
-    for(char c:s){
-        char p=(c-97+k)%26+97;
-        pam.insert(p);
-        k=pam.num[pam.last];
-        cout<<k<<' ';
+
+    // Adds one lowercase character and returns the number of palindromic suffixes.
+    int add(char c) {
+        int x = c - 'a';
+        assert(0 <= x && x < 26);
+        text.push_back(c);
+        int pos = (int)text.size() - 1;
+        int p = get_link(last, pos, c);
+
+        if (nodes[p].next[x] == -1) {
+            int cur = nodes.size();
+            nodes.emplace_back();
+            nodes[cur].len = nodes[p].len + 2;
+            if (nodes[cur].len == 1) {
+                nodes[cur].link = 1;
+            } else {
+                int q = get_link(nodes[p].link, pos, c);
+                nodes[cur].link = nodes[q].next[x];
+            }
+            nodes[cur].suffix_count = 1 + nodes[nodes[cur].link].suffix_count;
+            nodes[p].next[x] = cur;
+        }
+
+        last = nodes[p].next[x];
+        ++nodes[last].occurrences;
+        return nodes[last].suffix_count;
     }
-    cout<<endl;
-}
-int main(){
-    cin.tie(0)->ios::sync_with_stdio(false);
-    solve();
-    return 0;
-}
+
+    int distinct_count() const {
+        return (int)nodes.size() - 2;
+    }
+
+    // Returns occurrence counts for nodes 0..nodes.size()-1; roots have count 0.
+    vector<i64> occurrence_counts() const {
+        vector<int> order(nodes.size());
+        iota(order.begin(), order.end(), 0);
+        sort(order.begin(), order.end(), [&](int a, int b) {
+            return nodes[a].len > nodes[b].len;
+        });
+        vector<i64> count(nodes.size());
+        for (int v = 0; v < (int)nodes.size(); ++v) {
+            count[v] = nodes[v].occurrences;
+        }
+        for (int v : order) {
+            if (v >= 2) {
+                count[nodes[v].link] += count[v];
+            }
+        }
+        return count;
+    }
+};

@@ -180,6 +180,13 @@ pbds 的 PATRICIA trie（\texttt{pat\_trie\_tag} 配 \texttt{trie\_prefix\_searc
 
 \subsection{ST表}
 \lstinputlisting[caption={ST表}, breakatwhitespace=false]{cpp_templates/数据结构/ST表.cpp}
+
+\subsection{树状数组}
+所有下标均从 $0$ 开始，区间按左闭右开 $[l,r)$ 表示。\texttt{Fenwick<T>} 支持单点加与区间和，
+\texttt{FenwickRangeSum<T>} 支持区间加与区间和，\texttt{Fenwick2D<T>} 支持二维单点加与矩形和；
+一维操作为 $O(\log n)$，二维操作为 $O(\log n\log m)$。
+\lstinputlisting[caption={一维、区间更新与二维树状数组}]{cpp_templates/数据结构/Fenwick.cpp}
+
 \subsection{并查集}
 \lstinputlisting[caption={普通并查集}]{cpp_templates/数据结构/dsu-basic.cpp}
 
@@ -417,6 +424,11 @@ mp[(u,v)] &= \sum_{p \in pos[u]} \Bigl( |pos[v]| \\
 
 \clearpage
 \section{图论}
+\subsection{拓扑排序与 0-1 BFS}
+拓扑排序用 Kahn 算法，返回是否为 DAG 及一个拓扑序；0-1 BFS 要求边权只有 $0$ 和 $1$，
+可在线性复杂度 $O(n+m)$ 内求单源最短路。
+\lstinputlisting[caption={拓扑排序与 0-1 BFS}]{cpp_templates/图论/拓扑排序与01最短路.cpp}
+
 \subsection{SPFA}
 
 \lstinputlisting[caption={SPFA}]{cpp_templates/图论/SPFA.cpp}
@@ -457,6 +469,14 @@ KM 算法（匈牙利算法的带权版）：左部 $n$ 个点、右部 $m$ 个�
 输出：第一行最大权完美匹配的权值和，第二行每个左部点匹配到的右部点
 （为 0 说明该点没匹配上，即数据不存在完美匹配）。
 \lstinputlisting[caption={二分图最大权匹配(KM)}]{cpp_templates/图论/KM最大权匹配.cpp}
+
+\subsection{最大流与最小费用最大流}
+Dinic 支持有向边非负容量，\texttt{min\_cut\_side(s)} 返回残量网络中从源点可达的一侧。
+最小费用最大流用 SPFA 找增广路，支持负费用边；要求残量网络中不存在从源点可达的负费用环，
+最坏复杂度较高，单位容量场景尤其要留意增广次数。
+\lstinputlisting[caption={Dinic 通用最大流}]{cpp_templates/图论/Dinic最大流.cpp}
+\lstinputlisting[caption={SPFA 最小费用最大流}]{cpp_templates/图论/最小费用最大流.cpp}
+
 \subsection{差分约束}
 
 给定 $n$ 个变量 $x_1, x_2, \dots, x_n$ 与 $m$ 个差分约束 $x_c - x_{c'} \leq y$。
@@ -474,22 +494,43 @@ KM 算法（匈牙利算法的带权版）：左部 $n$ 个点、右部 $m$ 个�
 \clearpage
 \section{字符串}
 \subsection{字符串哈希}
-\lstinputlisting[caption={字符串哈希}]{cpp_templates/字符串/字符串哈希.cpp}
+双哈希前缀，区间统一使用左闭右开 $[l,r)$；哈希相等是高概率判等，不是严格证明。
+\lstinputlisting[caption={双模数区间字符串哈希}]{cpp_templates/字符串/字符串哈希.cpp}
+
+\subsection{AC自动机}
+先对所有非空小写模式串调用 \texttt{add\_pattern}，再调用 \texttt{build}；
+\texttt{count\_matches(text)} 按加入顺序返回每个模式串在文本中的出现次数，重复模式串会分别返回。
+构建复杂度 $O(26V)$，单次统计为 $O(|text|+V+P)$，其中 $V$ 是自动机节点数、$P$ 是模式串数。
+\lstinputlisting[caption={Aho-Corasick 多模式匹配}]{cpp_templates/字符串/AC自动机.cpp}
 
 \subsection{KMP}
+\texttt{prefix\_function} 返回前缀函数；\texttt{kmp\_search} 返回模式串在文本中的所有 $0$ 起始位置。
 \lstinputlisting[caption={KMP1}]{cpp_templates/字符串/KMP1.cpp}
 
 \lstinputlisting[caption={KMP2}]{cpp_templates/字符串/KMP2.cpp}
 
 \subsection{Z函数(扩展KMP)}
+\texttt{z[i]} 表示从位置 $i$ 开始的后缀与整个串的最长公共前缀长度。
 \lstinputlisting[caption={Z函数}]{cpp_templates/字符串/Z函数.cpp}
 
 \subsection{Manacher(马拉车)}
-\lstinputlisting[caption={马拉车求最长回文子串}]{cpp_templates/字符串/最长回文子串.cpp}
+奇偶半径分别存于 \texttt{odd} 和 \texttt{even}；\texttt{is\_palindrome(l,r)} 判断左闭右开区间。
+\lstinputlisting[caption={最长回文子串与区间回文查询}]{cpp_templates/字符串/最长回文子串.cpp}
 
 \subsection{回文自动机(PAM)}
-维护每个前缀的本质不同回文子串个数，可统计每个回文串的出现次数。
+在线加入小写字符，\texttt{add(c)} 返回当前前缀的回文后缀个数；节点数减去两个根的数量，
+即本质不同回文子串数。\texttt{occurrence\_counts()} 沿失配边汇总每个节点代表的回文串出现次数。
 \lstinputlisting[caption={PAM(回文自动机)}]{cpp_templates/字符串/PAM.cpp}
+
+\subsection{后缀数组与 LCP}
+\texttt{suffix\_array} 返回按字典序排列的后缀起点（$0$ 起始）；\texttt{lcp\_array[i]} 是排序后第
+$i-1$ 与第 $i$ 个后缀的 LCP，\texttt{lcp\_array[0]=0}。构造后缀数组 $O(n\log n)$，LCP 为 $O(n)$。
+\lstinputlisting[caption={倍增后缀数组与 Kasai LCP}]{cpp_templates/字符串/后缀数组.cpp}
+
+\subsection{后缀自动机}
+当前实现面向小写字母；\texttt{build(s)} 建立自动机，支持子串判定、本质不同子串数和按状态统计出现次数，
+构造与空间复杂度均为 $O(|s|)$。
+\lstinputlisting[caption={Suffix Automaton}]{cpp_templates/字符串/后缀自动机.cpp}
 \clearpage
 \section{动态规划}
 
@@ -856,6 +897,10 @@ $f(T)$ 的预处理方式：线性筛求出所有质数与 $\mu$ 值后，枚举
 \lstinputlisting[caption={三维球与三维最小覆盖球}, breakatwhitespace=false]{cpp_templates/计算几何/Sphere.cpp}
 \subsection{极角排序}
 \lstinputlisting[caption={极角排序求夹角最近两向量}]{cpp_templates/计算几何/极角排序求夹角最近两向量.cpp}
+\subsection{凸包与旋转卡壳}
+单调链返回逆时针凸包并去掉边上的中间共线点；旋转卡壳返回最远点对的平方距离。
+叉积与平方距离使用 \texttt{\_\_int128}，仍需保证结果不超出 128 位有符号整数范围。
+\lstinputlisting[caption={凸包与凸包直径}]{cpp_templates/计算几何/凸包与旋转卡壳.cpp}
 \clearpage
 \section{Other Trick}
 

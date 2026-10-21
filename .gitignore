@@ -20,6 +20,8 @@
 *.swp
 *.swo
 *~
+__pycache__/
+*.py[cod]
 .DS_Store
 Thumbs.db
 # VSCode / TeXStudio 缓存
