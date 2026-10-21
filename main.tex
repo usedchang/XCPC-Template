@@ -664,6 +664,34 @@ C_n = \frac{4n-2}{n+1}C_{n-1},\quad n>0,\ C_0=1. \tag{3}
 数列的前几项为：1,1,2,5,14,42,132,429,1430,…
 \subsection{排列组合类-含Lucas}
 \lstinputlisting{cpp_templates/数学/排列组合类(含lucas).cpp}
+\subsection{常见计数恒等式与幂转换}
+\subsubsection*{曲棍球棒}
+\[
+\sum_{i=r}^{n}\binom{i}{r}=\binom{n+1}{r+1}.
+\]
+组合证明：从 $n+1$ 个元素中选 $r+1$ 个，按最大元素的位置 $i+1$ 分类。最大值恰为 $i+1$ 时，
+还需从前 $i$ 个元素中选 $r$ 个，共 $\binom{i}{r}$ 种，求和即得。
+
+\subsubsection*{范德蒙德卷积}
+\[
+\sum_{k=0}^{n}\binom{a}{k}\binom{b}{n-k}=\binom{a+b}{n}.
+\]
+由 $(1+x)^a(1+x)^b=(1+x)^{a+b}$ 比较 $x^n$ 的系数即得，$a,b$ 为任意非负整数。
+
+\subsubsection*{普通幂转下降幂}
+定义下降幂 $x^{\underline{k}}=x(x-1)\cdots(x-k+1)$，并约定 $x^{\underline0}=1$，则
+\[
+x^n=\sum_{k=0}^{n} S(n,k)\,x^{\underline{k}},
+\]
+其中 $S(n,k)$ 是第二类斯特林数。组合意义：$x^n$ 是把 $n$ 个有标号球放入 $x$ 个有标号盒子的方案数；
+按实际用到的盒子数 $k$ 分类，先用 $S(n,k)$ 把球分成 $k$ 个非空组，再选出并排列 $k$ 个盒子，共
+$x^{\underline{k}}$ 种。反向有
+\[
+x^{\underline{n}}=\sum_{k=0}^{n}s(n,k)\,x^k,
+\]
+其中 $s(n,k)$ 为带符号第一类斯特林数。代码用杨辉三角预处理组合数，用
+$S(n,k)=S(n-1,k-1)+kS(n-1,k)$ 预处理第二类斯特林数，并验证上述恒等式与幂转换。
+\lstinputlisting[caption={曲棍球棒、范德蒙德卷积与幂转下降幂}, breakatwhitespace=false]{cpp_templates/数学/计数恒等式与幂转换.cpp}
 \subsection{高斯消元}
 \lstinputlisting[caption={高斯消元}]{cpp_templates/数学/高斯消元.cpp}
 
